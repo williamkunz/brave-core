@@ -8,6 +8,12 @@ use std::slice;
 
 pub const KEY_SIZE: usize = 32;
 
+macro_rules! assert_not_null {
+    ($var:expr) => {
+        assert!(!$var.is_null(), "{} is NULL", stringify!($var));
+    };
+}
+
 #[repr(C)]
 pub struct ResultChallenge {
     pub pkey_ptr: *const u8,
@@ -115,8 +121,8 @@ pub unsafe extern "C" fn client_start_challenge(
     std::mem::forget(enc_hashes_buff);
 
     ResultChallenge {
-        pkey_ptr: pkey_ptr,
-        skey_ptr: skey_ptr,
+        pkey_ptr,
+        skey_ptr,
         key_size: KEY_SIZE,
         shared_pubkey_ptr: shared_pk_ptr,
         encrypted_hashes_size: enc_hashes_size,
@@ -176,9 +182,35 @@ pub unsafe extern "C" fn client_second_round(
     }
 }
 
+// By reconstructing the fileds of the structure in Rust and letting it out of scope,
+// the Rust compiler will deallocate the memory contents
 #[no_mangle]
-pub unsafe extern "C" fn u8_pointer_destroy(ptr: *const u8) {
-    if !ptr.is_null() {
-        drop(ptr)
-    }
+pub unsafe extern "C" fn deallocate_first_round_result(result: ResultChallenge) {
+    assert_not_null!(result.skey_ptr);
+    let _key = std::slice::from_raw_parts(result.pkey_ptr, KEY_SIZE);
+
+    assert_not_null!(result.skey_ptr);
+    let _skey = std::slice::from_raw_parts(result.pkey_ptr, KEY_SIZE);
+
+    assert_not_null!(result.shared_pubkey_ptr);
+    let _share_key = std::slice::from_raw_parts(result.shared_pubkey_ptr, KEY_SIZE);
+
+    assert_not_null!(result.encrypted_hashes_ptr);
+    let _enc_hashes =
+        std::slice::from_raw_parts(result.encrypted_hashes_ptr, result.encrypted_hashes_size);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn deallocate_second_round_result(result: ResultSecondRound) {
+    assert_not_null!(result.encoded_partial_dec_ptr);
+    let _key = std::slice::from_raw_parts(
+        result.encoded_partial_dec_ptr,
+        result.encoded_partial_dec_size,
+    );
+
+    assert_not_null!(result.encoded_proofs_ptr);
+    let _skey = std::slice::from_raw_parts(result.encoded_proofs_ptr, result.encoded_proofs_size);
+
+    assert_not_null!(result.random_vec_ptr);
+    let _share_key = std::slice::from_raw_parts(result.random_vec_ptr, result.random_vec_size);
 }

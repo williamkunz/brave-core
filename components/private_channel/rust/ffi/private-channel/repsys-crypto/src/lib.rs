@@ -115,7 +115,7 @@ pub fn partial_decryption_and_proof(
     sk: &SecretKey,
 ) -> (Vec<Ciphertext>, Vec<CompactProof>) {
     let partial_decryption: Vec<Ciphertext> = randomized_vector
-        .into_iter()
+        .iter()
         .map(|ciphertext| Ciphertext {
             pk: ciphertext.pk,
             points: (ciphertext.points.0, sk.decrypt(ciphertext)),
@@ -125,7 +125,7 @@ pub fn partial_decryption_and_proof(
     let proofs_correct_decryption: Vec<CompactProof> = partial_decryption
         .clone()
         .into_iter()
-        .zip(randomized_vector.into_iter())
+        .zip(randomized_vector.iter())
         .map(|(x, y)| sk.prove_correct_decryption(y, &x.points.1))
         .collect();
 
@@ -178,7 +178,7 @@ pub fn check_tests(final_decryption: Vec<RistrettoPoint>) -> bool {
 /// generated among two peers (in our case, the client and the server)
 pub fn encrypt_input(shared_pk: PublicKey, vector_hashes: &[Scalar]) -> Vec<Ciphertext> {
     let encrypted_hashes: Vec<Ciphertext> = vector_hashes
-        .into_iter()
+        .iter()
         .map(|x| shared_pk.encrypt(&(x * &RISTRETTO_BASEPOINT_TABLE)))
         .collect();
     encrypted_hashes

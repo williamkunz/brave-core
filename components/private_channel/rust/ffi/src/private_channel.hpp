@@ -15,13 +15,16 @@ extern "C" {
 
 namespace private_channel {
 
-	C_ResultChallenge start_challenge(
-    const char** input_ptr, int size, const uint8_t* server_pk);
+  ResultChallenge start_challenge(
+    const char* const* input_ptr, int size, const uint8_t* server_pk);
 	
-  C_ResultSecondRound second_round(
+  ResultSecondRound second_round(
     const uint8_t* enc_input_ptr, int size,  const uint8_t*  sk);
 
-  void free_pointer_u8(const uint8_t *ptr);
+  void free_first_round_result(ResultChallenge result);
+
+  void free_second_round_result(ResultSecondRound result);
+
 }
 
 #endif	// BRAVE_COMPONENTS_PRIVATE_CHANNEL_RUST_FFI_SRC_PRIVATE_CHANNEL_H_

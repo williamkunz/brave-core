@@ -1,5 +1,10 @@
-#ifndef PRIVATE_CHANNEL_RUST_FFI_H
-#define PRIVATE_CHANNEL_RUST_FFI_H
+/* Copyright (c) 2020 The Brave Authors. All rights reserved.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#ifndef BRAVE_COMPONENTS_PRIVATE_CHANNEL_RUST_FFI_SRC_LIB_H_
+#define BRAVE_COMPONENTS_PRIVATE_CHANNEL_RUST_FFI_SRC_LIB_H_
 
 #include <stdarg.h>
 #include <stdbool.h>
@@ -16,7 +21,7 @@ typedef struct {
   const uint8_t *random_vec_ptr;
   uintptr_t random_vec_size;
   bool error;
-} C_ResultSecondRound;
+} ResultSecondRound;
 
 typedef struct {
   const uint8_t *pkey_ptr;
@@ -26,19 +31,21 @@ typedef struct {
   const uint8_t *encrypted_hashes_ptr;
   uintptr_t encrypted_hashes_size;
   bool error;
-} C_ResultChallenge;
+} ResultChallenge;
 
-C_ResultSecondRound client_second_round(const uint8_t *input,
+ResultSecondRound client_second_round(const uint8_t *input,
                                         int input_size,
                                         const uint8_t *client_sk_encoded);
 
 /**
  * Starts client attestation challenge;
  */
-C_ResultChallenge client_start_challenge(const char *const *input,
+ResultChallenge client_start_challenge(const char *const *input,
                                          int input_size,
                                          const uint8_t *server_pk_encoded);
 
-void u8_pointer_destroy(const uint8_t *ptr);
+void deallocate_first_round_result(ResultChallenge result);
 
-#endif /* PRIVATE_CHANNEL_RUST_FFI_H */
+void deallocate_second_round_result(ResultSecondRound result);
+
+#endif /* BRAVE_COMPONENTS_PRIVATE_CHANNEL_RUST_FFI_SRC_LIB_H_ */

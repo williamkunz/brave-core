@@ -9,7 +9,6 @@ use repsys_crypto::{
 };
 
 use sha2::Sha512;
-use bincode;
 
 pub struct FirstRoundOutput {
     pub pkey: Vec<u8>,

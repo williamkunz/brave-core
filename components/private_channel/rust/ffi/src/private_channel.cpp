@@ -12,18 +12,22 @@ extern "C" {
 
 namespace private_channel {
 
-  C_ResultChallenge start_challenge(
-    const char** input_ptr, int size, const uint8_t* server_pk) {
+  ResultChallenge start_challenge(
+    const char* const* input_ptr, int size, const uint8_t* server_pk) {
       return client_start_challenge(input_ptr, size, server_pk);
   }
 
-  C_ResultSecondRound second_round(
+  ResultSecondRound second_round(
     const uint8_t* enc_input_ptr, int input_size, const uint8_t*  sk) {
       return client_second_round(enc_input_ptr, input_size, sk);
   }
 
-  void free_pointer_u8(const uint8_t *ptr) {
-    return u8_pointer_destroy(ptr);
+  void free_first_round_result(ResultChallenge result) {
+    return deallocate_first_round_result(result);
+  }
+
+  void free_second_round_result(ResultSecondRound result) {
+    return deallocate_second_round_result(result);
   }
 
 }  // namespace private_channel

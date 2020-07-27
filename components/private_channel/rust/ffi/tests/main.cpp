@@ -4,7 +4,6 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include <iostream>
-#include <assert.h>
 #include <array>
 #include <string>
 #include <vector>
@@ -38,32 +37,22 @@ void TestEndToEnd() {
 
   int size_input = sizeof(input)/sizeof(input[0]);
 
-  C_ResultChallenge result =
+  ResultChallenge result =
     private_channel::start_challenge(input, size_input, SERVER_PK);
 
   assert(result.key_size == KEY_SIZE);
   assert(result.error == false);
 
-  private_channel::free_pointer_u8(result.pkey_ptr);
-  private_channel::free_pointer_u8(result.skey_ptr);
-  private_channel::free_pointer_u8(result.shared_pubkey_ptr);
-  private_channel::free_pointer_u8(result.encrypted_hashes_ptr);
-
-  // send content of C_ResultChallenge over HTTP to server
+  private_channel::free_first_round_result(result);
 
   int size_enc_input = sizeof(MOCK_SERVER_REPLY)/sizeof(MOCK_SERVER_REPLY[0]);
 
-  C_ResultSecondRound result_secondr = private_channel::second_round(
+  ResultSecondRound result_secondr = private_channel::second_round(
     MOCK_SERVER_REPLY, size_enc_input, result.skey_ptr);
 
   assert(result_secondr.error == false);
 
-  private_channel::free_pointer_u8(result_secondr.encoded_partial_dec_ptr);
-  private_channel::free_pointer_u8(result_secondr.encoded_proofs_ptr);
-  private_channel::free_pointer_u8(result_secondr.random_vec_ptr);
-  // send content of C_ResultSecondRound over HTTP to server
-
-
+  private_channel::free_second_round_result(result_secondr);
 }
 
 int main() {
