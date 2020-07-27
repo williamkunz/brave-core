@@ -14,6 +14,10 @@
 
 namespace braveledger_state {
 
+bool EncryptString(const std::string& value, std::string* encrypted_value);
+
+bool DecryptString(const std::string& value, std::string* decrypted_value);
+
 void SetVersion(bat_ledger::LedgerImpl* ledger, const int version);
 
 int GetVersion(bat_ledger::LedgerImpl* ledger);

@@ -451,7 +451,9 @@ class LedgerImpl : public ledger::Ledger {
 
   virtual double GetDoubleState(const std::string& name) const;
 
-  void SetStringState(const std::string& name, const std::string& value);
+  virtual void SetStringState(
+      const std::string& name,
+      const std::string& value);
 
   virtual std::string GetStringState(const std::string& name) const;
 

@@ -10,8 +10,10 @@
 #include "base/json/json_writer.h"
 #include "bat/ledger/internal/common/time_util.h"
 #include "bat/ledger/internal/state/state_keys.h"
+#include "bat/ledger/internal/bat_helper.h"
 #include "bat/ledger/internal/state/state_util.h"
 #include "bat/ledger/internal/static_values.h"
+#include "components/os_crypt/os_crypt.h"
 
 namespace {
 
@@ -49,6 +51,38 @@ std::vector<double> StringToVectorDouble(const std::string& items_string) {
 }  // namespace
 
 namespace braveledger_state {
+
+bool EncryptString(const std::string& value, std::string* encrypted_value) {
+  DCHECK(encrypted_value);
+
+  std::string encrypted;
+  if (!OSCrypt::EncryptString(value, &encrypted)) {
+    return false;
+  }
+
+  std::string encoded;
+  base::Base64Encode(encrypted, &encoded);
+
+  *encrypted_value = encoded;
+  return true;
+}
+
+bool DecryptString(const std::string& value, std::string* decrypted_value) {
+  DCHECK(decrypted_value);
+
+  std::string decoded;
+  if (!base::Base64Decode(value, &decoded)) {
+    return false;
+  }
+
+  std::string decrypted;
+  if (!OSCrypt::DecryptString(decoded, &decrypted)) {
+    return false;
+  }
+
+  *decrypted_value = decrypted;
+  return true;
+}
 
 void SetVersion(bat_ledger::LedgerImpl* ledger, const int version) {
   DCHECK(ledger);
@@ -206,24 +240,38 @@ void SetCreationStamp(bat_ledger::LedgerImpl* ledger, const uint64_t stamp) {
 
 std::vector<uint8_t> GetRecoverySeed(bat_ledger::LedgerImpl* ledger) {
   DCHECK(ledger);
-  const std::string& seed = ledger->GetStringState(ledger::kStateRecoverySeed);
-  std::string decoded_seed;
-  if (!base::Base64Decode(seed, &decoded_seed)) {
+  const std::string& encoded_seed =
+      ledger->GetStringState(ledger::kStateRecoverySeed);
+  std::string decrypted_seed;
+  if (!DecryptString(encoded_seed, &decrypted_seed)) {
+    BLOG(0, "Problem decrypting recovery seed");
+    return {};
+  }
+
+  std::string seed;
+  if (!base::Base64Decode(decrypted_seed, &seed)) {
     BLOG(0, "Problem decoding recovery seed");
     NOTREACHED();
     return {};
   }
 
   std::vector<uint8_t> vector_seed;
-  vector_seed.assign(decoded_seed.begin(), decoded_seed.end());
+  vector_seed.assign(seed.begin(), seed.end());
   return vector_seed;
 }
 
 void SetRecoverySeed(
     bat_ledger::LedgerImpl* ledger,
     const std::vector<uint8_t>& seed) {
-  DCHECK(ledger);
-  ledger->SetStringState(ledger::kStateRecoverySeed, base::Base64Encode(seed));
+  DCHECK(ledger && !seed.empty());
+
+  std::string encoded_seed;
+  if (!EncryptString(base::Base64Encode(seed), &encoded_seed)) {
+    BLOG(0, "Problem encoding recovery seed");
+    return;
+  }
+
+  ledger->SetStringState(ledger::kStateRecoverySeed, encoded_seed);
 }
 
 std::string GetPaymentId(bat_ledger::LedgerImpl* ledger) {
