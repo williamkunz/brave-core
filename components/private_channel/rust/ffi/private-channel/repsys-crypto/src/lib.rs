@@ -2,7 +2,7 @@
 extern crate zkp;
 
 use curve25519_dalek::constants::RISTRETTO_BASEPOINT_TABLE;
-use curve25519_dalek::ristretto::RistrettoPoint;
+use curve25519_dalek::ristretto::{CompressedRistretto, RistrettoPoint};
 use curve25519_dalek::scalar::Scalar;
 use rand_core::OsRng;
 
@@ -10,6 +10,10 @@ use elgamal_ristretto::ciphertext::Ciphertext;
 use elgamal_ristretto::private::SecretKey;
 use elgamal_ristretto::public::PublicKey;
 use zkp::{CompactProof, Transcript};
+
+const ZERO_POINT: CompressedRistretto = CompressedRistretto([
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+]);
 
 /// Generates asymmetric key pair and proof of knowledge of the secret (zero knowledge)
 pub fn generate_keys() -> (SecretKey, PublicKey) {
@@ -46,7 +50,7 @@ pub fn compute_checks(
 // Generate macro for Discrete Logarithm Equality proof (from zkp crate)
 define_proof! {dleq, "DLEQ Proof", (x), (A, B, H), (G) : A = (x * B), H = (x * G)}
 
-/// Randomizes and proofs correctness of operation
+/// Randomizes and proves correctness of operation
 pub fn randomize_and_prove(
     encrypted_checks: &[Ciphertext],
 ) -> (Vec<Ciphertext>, Vec<CompactProof>) {
@@ -88,23 +92,24 @@ pub fn verify_randomization_proofs(
         return Err("Size of encrypted hashes slice must be the same as vector checks");
     }
 
-    let mut result = true;
     for i in 0..proofs.len() {
         let mut transcript = Transcript::new(b"CorrectRandomization");
-        result = result
-            & dleq::verify_compact(
-                &proofs[i],
-                &mut transcript,
-                dleq::VerifyAssignments {
-                    A: &randomized_vector[i].points.0.compress(),
-                    B: &encrypted_vector[i].points.0.compress(),
-                    H: &randomized_vector[i].points.1.compress(),
-                    G: &encrypted_vector[i].points.1.compress(),
-                },
-            )
-            .is_ok()
+        if dleq::verify_compact(
+            &proofs[i],
+            &mut transcript,
+            dleq::VerifyAssignments {
+                A: &randomized_vector[i].points.0.compress(),
+                B: &encrypted_vector[i].points.0.compress(),
+                H: &randomized_vector[i].points.1.compress(),
+                G: &encrypted_vector[i].points.1.compress(),
+            },
+        )
+            .is_err()
+        {
+            return Ok(false);
+        }
     }
-    Ok(result)
+    Ok(true)
 }
 
 /// Computes partial decryption of ciphertext and returns a set of proofs of
@@ -146,16 +151,16 @@ pub fn verify_partial_decryption_proofs(
     if ctxt.len() != proofs.len() {
         return Err("Size of encrypted hashes slice must be the same as vector checks");
     }
-    let mut result = true;
     for i in 0..proofs.len() {
-        result = result
-            & public_key.verify_correct_decryption(
-                &proofs[i].clone(),
-                &ctxt[i],
-                &partial_dec_ctxt[i].points.1,
-            );
+        if !public_key.verify_correct_decryption(
+            &proofs[i].clone(),
+            &ctxt[i],
+            &partial_dec_ctxt[i].points.1,
+        ) {
+            return Ok(false);
+        }
     }
-    Ok(result)
+    Ok(true)
 }
 
 /// Checks if a vector of "tests" has passed. A given test passes if its
@@ -163,7 +168,7 @@ pub fn verify_partial_decryption_proofs(
 /// of the check.
 pub fn check_tests(final_decryption: Vec<RistrettoPoint>) -> bool {
     let mut passed = true;
-    let zero_point = RISTRETTO_BASEPOINT_TABLE.basepoint() * Scalar::zero();
+    let zero_point = ZERO_POINT.decompress().unwrap();
 
     for (_index, value) in final_decryption.into_iter().enumerate() {
         if !(value == zero_point) {
