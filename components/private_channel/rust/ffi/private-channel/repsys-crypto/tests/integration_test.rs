@@ -8,6 +8,108 @@ use curve25519_dalek::constants::RISTRETTO_BASEPOINT_TABLE;
 use curve25519_dalek::ristretto::RistrettoPoint;
 use curve25519_dalek::scalar::Scalar;
 use rand_core::OsRng;
+use repsys_crypto::verify_randomization_proofs;
+
+#[test]
+fn randomization_proofs() {
+    let vector_scalar: &[Scalar] = &[
+        Scalar::random(&mut OsRng),
+        Scalar::random(&mut OsRng),
+        Scalar::random(&mut OsRng),
+        Scalar::random(&mut OsRng),
+    ];
+
+    let (_sk, pk) = generate_keys();
+    let encrypted_values = encrypt_input(pk, vector_scalar);
+    let (randomized_vector, proof_correct_rand) = randomize_and_prove(&encrypted_values);
+
+    let verification =
+        verify_randomization_proofs(&encrypted_values, &randomized_vector, &proof_correct_rand);
+
+    assert!(verification.unwrap());
+
+    let fake_reencryption = encrypt_input(pk, vector_scalar);
+    let wrong_verification =
+        verify_randomization_proofs(&encrypted_values, &fake_reencryption, &proof_correct_rand);
+
+    assert!(!wrong_verification.unwrap());
+
+    let wrong_size: &[Scalar] = &[Scalar::random(&mut OsRng), Scalar::random(&mut OsRng)];
+    let wrong_size_encrypted_values = encrypt_input(pk, wrong_size);
+    let wrong_verification = verify_randomization_proofs(
+        &encrypted_values,
+        &wrong_size_encrypted_values,
+        &proof_correct_rand,
+    );
+
+    assert!(!wrong_verification.is_ok());
+
+    let wrong_nr_proofs_verification = verify_randomization_proofs(
+        &encrypted_values,
+        &randomized_vector,
+        &(proof_correct_rand[1..3].to_vec()),
+    );
+
+    assert!(!wrong_nr_proofs_verification.is_ok());
+}
+
+#[test]
+fn partial_decryption_proofs() {
+    let vector_scalar: &[Scalar] = &[
+        Scalar::random(&mut OsRng),
+        Scalar::random(&mut OsRng),
+        Scalar::random(&mut OsRng),
+        Scalar::random(&mut OsRng),
+    ];
+
+    let (sk_1, pk_1) = generate_keys();
+    let (_sk_2, pk_2) = generate_keys();
+
+    let combined_key = combine_pks(pk_1, pk_2);
+
+    let encrypted_values = encrypt_input(combined_key, vector_scalar);
+
+    let (partial_decryption, proofs_correct_decryption) =
+        partial_decryption_and_proof(&encrypted_values, &sk_1);
+    let verification = verify_partial_decryption_proofs(
+        &pk_1,
+        &encrypted_values,
+        &partial_decryption,
+        &proofs_correct_decryption,
+    );
+
+    assert!(verification.unwrap());
+
+    let fake_partial_decryption = encrypt_input(combined_key, vector_scalar);
+    let wrong_verification = verify_partial_decryption_proofs(
+        &pk_1,
+        &encrypted_values,
+        &fake_partial_decryption,
+        &proofs_correct_decryption,
+    );
+
+    assert!(!wrong_verification.unwrap());
+
+    let wrong_size: &[Scalar] = &[Scalar::random(&mut OsRng), Scalar::random(&mut OsRng)];
+    let wrong_size_encrypted_values = encrypt_input(combined_key, wrong_size);
+    let wrong_verification = verify_partial_decryption_proofs(
+        &pk_1,
+        &encrypted_values,
+        &wrong_size_encrypted_values,
+        &proofs_correct_decryption,
+    );
+
+    assert!(!wrong_verification.is_ok());
+
+    let wrong_nr_proofs_verification = verify_partial_decryption_proofs(
+        &pk_1,
+        &encrypted_values,
+        &partial_decryption,
+        &(proofs_correct_decryption[1..3].to_vec()),
+    );
+
+    assert!(!wrong_nr_proofs_verification.is_ok());
+}
 
 #[test]
 fn test_e2e_simple() {
@@ -54,11 +156,11 @@ fn test_e2e_passing() {
     let (sk_user, pk_user) = generate_keys();
     let pk_user_proof = sk_user.prove_knowledge();
 
-    // User verifies if the server does know the private key associated with
-    // `pk_server`
+    // 1.- User fetches the server's public key, and verifies
+    // it does know the private key associated with `pk_server`.
     assert!(pk_server.verify_proof_knowledge(&pk_server_proof));
 
-    // The user encrypts the vector of values to send the server.
+    // Then, the user encrypts the vector of values to send the server.
     // This vector will contain `n` hashes, out of which only `l` will be used
     // to compute the final score.
     let shared_pk_user = combine_pks(pk_user, pk_server);
@@ -67,7 +169,7 @@ fn test_e2e_passing() {
     /* SERVER */
 
     // 2.- User sends the encrypted hashes to the server, together with its
-    // share of the key The server generates the shared key, verifies the proof and produces
+    // share of the key. The server generates the shared key, verifies the proof and produces
     // the checks.
     assert!(pk_user.verify_proof_knowledge(&pk_user_proof));
     let shared_pk_server = combine_pks(pk_server, pk_user);
@@ -86,7 +188,7 @@ fn test_e2e_passing() {
     // The user first randomises each of the values, and then decrypts the
     // entries in the vector.
     // The randomisation is necessary so that, if the server cheats it will not
-    // be able to learn anything about it the user input. Thus, the server
+    // be able to learn anything about the user input. Thus, the server
     // will only be able to determine whether some of these encrypted values
     // were zero.
     let (randomized_vector, _proof_correct_rand) = randomize_and_prove(&encrypted_checks);
@@ -103,7 +205,7 @@ fn test_e2e_passing() {
         &partial_decryption,
         &proofs_correct_decryption
     )
-    .unwrap());
+        .unwrap());
 
     // Finally, the server fully decrypts the ciphertext and checks if the
     // decryption equals zero.
@@ -165,7 +267,7 @@ fn test_e2e_not_passing() {
         &partial_decryption,
         &proofs_correct_decryption
     )
-    .unwrap());
+        .unwrap());
 
     let (final_decryption, _proofs_correct_decryption_server) =
         partial_decryption_and_proof(&partial_decryption, &sk_server);

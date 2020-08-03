@@ -191,7 +191,6 @@ pub fn encrypt_input(shared_pk: PublicKey, vector_hashes: &[Scalar]) -> Vec<Ciph
 
 #[cfg(test)]
 mod tests {
-    // Note this useful idiom: importing names from outer (for mod tests) scope.
     use super::*;
 
     #[test]
@@ -200,106 +199,5 @@ mod tests {
         let (_sk_2, pk_2) = generate_keys();
 
         assert_eq!(combine_pks(pk_1, pk_2), combine_pks(pk_2, pk_1))
-    }
-
-    #[test]
-    fn randomization_proofs() {
-        let vector_scalar: &[Scalar] = &[
-            Scalar::random(&mut OsRng),
-            Scalar::random(&mut OsRng),
-            Scalar::random(&mut OsRng),
-            Scalar::random(&mut OsRng),
-        ];
-
-        let (_sk, pk) = generate_keys();
-        let encrypted_values = encrypt_input(pk, vector_scalar);
-        let (randomized_vector, proof_correct_rand) = randomize_and_prove(&encrypted_values);
-
-        let verification =
-            verify_randomization_proofs(&encrypted_values, &randomized_vector, &proof_correct_rand);
-
-        assert!(verification.unwrap());
-
-        let fake_reencryption = encrypt_input(pk, vector_scalar);
-        let wrong_verification =
-            verify_randomization_proofs(&encrypted_values, &fake_reencryption, &proof_correct_rand);
-
-        assert!(!wrong_verification.unwrap());
-
-        let wrong_size: &[Scalar] = &[Scalar::random(&mut OsRng), Scalar::random(&mut OsRng)];
-        let wrong_size_encrypted_values = encrypt_input(pk, wrong_size);
-        let wrong_verification = verify_randomization_proofs(
-            &encrypted_values,
-            &wrong_size_encrypted_values,
-            &proof_correct_rand,
-        );
-
-        assert!(!wrong_verification.is_ok());
-
-        let wrong_nr_proofs_verification = verify_randomization_proofs(
-            &encrypted_values,
-            &randomized_vector,
-            &(proof_correct_rand[1..3].to_vec()),
-        );
-
-        assert!(!wrong_nr_proofs_verification.is_ok());
-    }
-
-    #[test]
-    fn partial_decryption_proofs() {
-        let vector_scalar: &[Scalar] = &[
-            Scalar::random(&mut OsRng),
-            Scalar::random(&mut OsRng),
-            Scalar::random(&mut OsRng),
-            Scalar::random(&mut OsRng),
-        ];
-
-        let (sk_1, pk_1) = generate_keys();
-        let (_sk_2, pk_2) = generate_keys();
-
-        let combined_key = combine_pks(pk_1, pk_2);
-
-        let encrypted_values = encrypt_input(combined_key, vector_scalar);
-
-        let (partial_decryption, proofs_correct_decryption) =
-            partial_decryption_and_proof(&encrypted_values, &sk_1);
-        let verification = verify_partial_decryption_proofs(
-            &pk_1,
-            &encrypted_values,
-            &partial_decryption,
-            &proofs_correct_decryption,
-        );
-
-        assert!(verification.unwrap());
-
-        let fake_partial_decryption = encrypt_input(combined_key, vector_scalar);
-        let wrong_verification = verify_partial_decryption_proofs(
-            &pk_1,
-            &encrypted_values,
-            &fake_partial_decryption,
-            &proofs_correct_decryption,
-        );
-
-        assert!(!wrong_verification.unwrap());
-
-        let wrong_size: &[Scalar] = &[Scalar::random(&mut OsRng), Scalar::random(&mut OsRng)];
-        let wrong_size_encrypted_values = encrypt_input(combined_key, wrong_size);
-        let wrong_verification = verify_partial_decryption_proofs(
-            &pk_1,
-            &encrypted_values,
-            &wrong_size_encrypted_values,
-            &proofs_correct_decryption,
-        );
-
-        assert!(!wrong_verification.is_ok());
-
-        let wrong_nr_proofs_verification = verify_partial_decryption_proofs(
-            &pk_1,
-            &encrypted_values,
-            &partial_decryption,
-            &(proofs_correct_decryption[1..3].to_vec()),
-        );
-
-        assert!(!wrong_nr_proofs_verification.is_ok());
     }
 }
