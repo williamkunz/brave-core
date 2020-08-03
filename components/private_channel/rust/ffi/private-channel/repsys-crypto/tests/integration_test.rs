@@ -205,7 +205,7 @@ fn test_e2e_passing() {
         &partial_decryption,
         &proofs_correct_decryption
     )
-        .unwrap());
+    .unwrap());
 
     // Finally, the server fully decrypts the ciphertext and checks if the
     // decryption equals zero.
@@ -267,7 +267,7 @@ fn test_e2e_not_passing() {
         &partial_decryption,
         &proofs_correct_decryption
     )
-        .unwrap());
+    .unwrap());
 
     let (final_decryption, _proofs_correct_decryption_server) =
         partial_decryption_and_proof(&partial_decryption, &sk_server);

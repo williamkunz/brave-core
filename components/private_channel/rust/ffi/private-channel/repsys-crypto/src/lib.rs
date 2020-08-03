@@ -104,7 +104,7 @@ pub fn verify_randomization_proofs(
                 G: &encrypted_vector[i].points.1.compress(),
             },
         )
-            .is_err()
+        .is_err()
         {
             return Ok(false);
         }
