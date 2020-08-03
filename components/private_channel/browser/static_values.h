@@ -16,7 +16,8 @@ const int kMaxPrivateChannelServerResponseSizeBytes = 1024 * 1024;
 #define PRIVATE_CHANNEL_PRODUCTION_SERVER   \
 "https://repsys.rewards.brave.com"
 #define PRIVATE_CHANNEL_DEVELOPMENT_SERVER   \
-"https://repsys.rewards.brave.software"
+"http://0.0.0.0:3334"
+//"https://repsys.rewards.brave.software"
 
 #define PRIVATE_CHANNEL_API_VERSION "/public/v1"
 #define PRIVATE_CHANNEL_META_ENDPOINT "/private-channel/meta"

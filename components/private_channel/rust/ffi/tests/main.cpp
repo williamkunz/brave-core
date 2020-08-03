@@ -37,21 +37,20 @@ void TestEndToEnd() {
 
   int size_input = sizeof(input)/sizeof(input[0]);
 
-  ResultChallenge result =
+  private_channel::ResultChallenge result =
     private_channel::start_challenge(input, size_input, SERVER_PK);
 
   assert(result.key_size == KEY_SIZE);
   assert(result.error == false);
 
-  private_channel::free_first_round_result(result);
-
   int size_enc_input = sizeof(MOCK_SERVER_REPLY)/sizeof(MOCK_SERVER_REPLY[0]);
 
-  ResultSecondRound result_secondr = private_channel::second_round(
+  private_channel::ResultSecondRound result_secondr = private_channel::second_round(
     MOCK_SERVER_REPLY, size_enc_input, result.skey_ptr);
 
   assert(result_secondr.error == false);
 
+  private_channel::free_first_round_result(result);
   private_channel::free_second_round_result(result_secondr);
 }
 

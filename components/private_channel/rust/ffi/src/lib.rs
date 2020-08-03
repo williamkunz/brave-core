@@ -1,6 +1,3 @@
-#![allow(clippy::missing_safety_doc)]
-extern crate brave_private_channel;
-
 use std::convert::TryInto;
 use std::ffi::CStr;
 use std::os::raw::{c_char, c_int};
@@ -182,35 +179,64 @@ pub unsafe extern "C" fn client_second_round(
     }
 }
 
+#[inline]
+fn to_ptr_mut<T>(val: T) -> *mut T {
+    Box::into_raw(Box::new(val))
+}
+
 // By reconstructing the fileds of the structure in Rust and letting it out of scope,
 // the Rust compiler will deallocate the memory contents
 #[no_mangle]
 pub unsafe extern "C" fn deallocate_first_round_result(result: ResultChallenge) {
-    assert_not_null!(result.skey_ptr);
-    let _key = std::slice::from_raw_parts(result.pkey_ptr, KEY_SIZE);
+    assert_not_null!(result.pkey_ptr);
+    let _key = Box::from_raw(to_ptr_mut(std::slice::from_raw_parts(
+        result.pkey_ptr,
+        KEY_SIZE,
+    )))
+    .to_vec();
 
     assert_not_null!(result.skey_ptr);
-    let _skey = std::slice::from_raw_parts(result.pkey_ptr, KEY_SIZE);
+    let _skey = Box::from_raw(to_ptr_mut(std::slice::from_raw_parts(
+        result.skey_ptr,
+        KEY_SIZE,
+    )))
+    .to_vec();
 
     assert_not_null!(result.shared_pubkey_ptr);
-    let _share_key = std::slice::from_raw_parts(result.shared_pubkey_ptr, KEY_SIZE);
+    let _share_key = Box::from_raw(to_ptr_mut(std::slice::from_raw_parts(
+        result.shared_pubkey_ptr,
+        KEY_SIZE,
+    )))
+    .to_vec();
 
     assert_not_null!(result.encrypted_hashes_ptr);
-    let _enc_hashes =
-        std::slice::from_raw_parts(result.encrypted_hashes_ptr, result.encrypted_hashes_size);
+    let _enc_hashes = Box::from_raw(to_ptr_mut(std::slice::from_raw_parts(
+        result.encrypted_hashes_ptr,
+        result.encrypted_hashes_size,
+    )))
+    .to_vec();
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn deallocate_second_round_result(result: ResultSecondRound) {
     assert_not_null!(result.encoded_partial_dec_ptr);
-    let _key = std::slice::from_raw_parts(
+    let _key = Box::from_raw(to_ptr_mut(std::slice::from_raw_parts(
         result.encoded_partial_dec_ptr,
         result.encoded_partial_dec_size,
-    );
+    )))
+    .to_vec();
 
     assert_not_null!(result.encoded_proofs_ptr);
-    let _skey = std::slice::from_raw_parts(result.encoded_proofs_ptr, result.encoded_proofs_size);
+    let _skey = Box::from_raw(to_ptr_mut(std::slice::from_raw_parts(
+        result.encoded_proofs_ptr,
+        result.encoded_proofs_size,
+    )))
+    .to_vec();
 
     assert_not_null!(result.random_vec_ptr);
-    let _share_key = std::slice::from_raw_parts(result.random_vec_ptr, result.random_vec_size);
+    let _share_key = Box::from_raw(to_ptr_mut(std::slice::from_raw_parts(
+        result.random_vec_ptr,
+        result.random_vec_size,
+    )))
+    .to_vec();
 }

@@ -1,6 +1,3 @@
-extern crate curve25519_dalek;
-extern crate sha2;
-
 use curve25519_dalek::scalar::Scalar;
 use elgamal_ristretto::ciphertext::Ciphertext;
 use elgamal_ristretto::private::SecretKey;
@@ -18,7 +15,7 @@ pub struct FirstRoundOutput {
 }
 
 pub struct SecondRoundOutput {
-    pub partial_dec: Vec<u8>,    
+    pub partial_dec: Vec<u8>,
     pub proofs: Vec<u8>,
     pub rand_vec: Vec<u8>,
 }
@@ -29,9 +26,10 @@ pub fn start_challenge(
 ) -> Result<FirstRoundOutput, ()> {
     let pk_server = bincode::deserialize(&server_pk_encoded).map_err(|_| ())?;
 
-    let vector_hashes: Vec<Scalar> = input.iter().map(|input_n| {
-        Scalar::hash_from_bytes::<Sha512>(input_n.as_bytes())
-    }).collect();
+    let vector_hashes: Vec<Scalar> = input
+        .iter()
+        .map(|input_n| Scalar::hash_from_bytes::<Sha512>(input_n.as_bytes()))
+        .collect();
 
     // generate new key pair at every round
     let (sk_client, pk_client) = generate_keys();
@@ -44,7 +42,7 @@ pub fn start_challenge(
     let encoded_shared_pk = bincode::serialize(&shared_pk).map_err(|_| ())?;
     let encoded_enc_hashes = bincode::serialize(&encrypted_hashes).map_err(|_| ())?;
 
-    Ok(FirstRoundOutput{
+    Ok(FirstRoundOutput {
         pkey: encoded_pk,
         skey: encoded_sk,
         shared_pk: encoded_shared_pk,
@@ -63,7 +61,7 @@ pub fn second_round(input: &[u8], encoded_sk: &[u8]) -> Result<SecondRoundOutput
     let encoded_partial_decryption = bincode::serialize(&partial_decryption).map_err(|_| ())?;
     let encoded_proofs = bincode::serialize(&proofs_correct_decryption).map_err(|_| ())?;
     let encoded_rand_vec = bincode::serialize(&rand_vec).map_err(|_| ())?;
-    
+
     Ok(SecondRoundOutput {
         partial_dec: encoded_partial_decryption,
         proofs: encoded_proofs,
