@@ -188,28 +188,28 @@ pub unsafe extern "C" fn deallocate_first_round_result(result: ResultChallenge) 
         result.pkey_ptr as *mut u8,
         KEY_SIZE,
     ))
-    .to_vec();
+    .into_vec();
 
     assert_not_null!(result.skey_ptr);
     let _skey = Box::from_raw(std::slice::from_raw_parts_mut(
         result.skey_ptr as *mut u8,
         KEY_SIZE,
     ))
-    .to_vec();
+    .into_vec();
 
     assert_not_null!(result.shared_pubkey_ptr);
     let _shared_key = Box::from_raw(std::slice::from_raw_parts_mut(
         result.shared_pubkey_ptr as *mut u8,
         KEY_SIZE,
     ))
-    .to_vec();
+    .into_vec();
 
     assert_not_null!(result.encrypted_hashes_ptr);
     let _shared_key = Box::from_raw(std::slice::from_raw_parts_mut(
         result.encrypted_hashes_ptr as *mut u8,
         result.encrypted_hashes_size,
     ))
-    .to_vec();
+    .into_vec();
 }
 
 #[no_mangle]
@@ -219,19 +219,19 @@ pub unsafe extern "C" fn deallocate_second_round_result(result: ResultSecondRoun
         result.encoded_partial_dec_ptr as *mut u8,
         result.encoded_partial_dec_size,
     ))
-    .to_vec();
+    .into_vec();
 
     assert_not_null!(result.encoded_proofs_ptr);
     let _enc_proofs = Box::from_raw(std::slice::from_raw_parts_mut(
         result.encoded_proofs_ptr as *mut u8,
         result.encoded_proofs_size,
     ))
-    .to_vec();
+    .into_vec();
 
     assert_not_null!(result.random_vec_ptr);
     let _rand_vec = Box::from_raw(std::slice::from_raw_parts_mut(
         result.random_vec_ptr as *mut u8,
         result.random_vec_size,
     ))
-    .to_vec();
+    .into_vec();
 }
