@@ -16,6 +16,10 @@ const uint8_t SERVER_PK[] = {78, 181, 75, 245, 70, 218, 146, 152, 155, 118, 20,
    184, 203, 179, 192, 222, 212, 79, 178, 76, 232, 250, 218, 196, 6, 254, 139,
     145, 172, 18, 189, 13};
 
+const uint8_t SERVER_PK_MALFORMED[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+   0, 0, 179, 192, 222, 212, 79, 178, 76, 232, 250, 218, 196, 6, 254, 139,
+    0, 172, 18, 189};
+
 const uint8_t MOCK_SERVER_REPLY[] = {2, 0, 0, 0, 0, 0, 0, 0, 240, 197, 94, 143,
   166, 246, 59, 57, 250, 7, 154, 51, 170, 222, 189, 5, 77, 90, 79, 68, 211,
   130, 31, 96, 219, 34, 219, 248, 80, 166, 2, 83, 242, 90, 143, 208, 103, 221,
@@ -54,6 +58,21 @@ void TestEndToEnd() {
   private_channel::free_second_round_result(result_secondr);
 }
 
+void TestBadPubkey() {
+	std::string sig1 = "signal1";
+  std::string sig2 = "signal2";
+  const char* input[] = {sig1.c_str(), sig2.c_str()};
+
+  int size_input = sizeof(input)/sizeof(input[0]);
+
+  private_channel::ResultChallenge result =
+    private_channel::start_challenge(input, size_input, SERVER_PK_MALFORMED);
+
+	// error should be false
+  assert(result.error == true);
+}
+
 int main() {
   TestEndToEnd();
+	TestBadPubkey();
 }
