@@ -100,30 +100,25 @@ pub unsafe extern "C" fn client_start_challenge(
         Err(_) => return ResultChallenge::default(),
     };
 
-    let mut pkey_buff = pkey.into_boxed_slice();
-    let pkey_ptr = pkey_buff.as_mut_ptr();
-    std::mem::forget(pkey_buff);
+    let pkey_buff = pkey.into_boxed_slice();
+    let pkey_buff = std::mem::ManuallyDrop::new(pkey_buff);
 
-    let mut skey_buff = skey.into_boxed_slice();
-    let skey_ptr = skey_buff.as_mut_ptr();
-    std::mem::forget(skey_buff);
+    let skey_buff = skey.into_boxed_slice();
+    let skey_buff = std::mem::ManuallyDrop::new(skey_buff);
 
-    let mut shared_pk_buff = shared_pk.into_boxed_slice();
-    let shared_pk_ptr = shared_pk_buff.as_mut_ptr();
-    std::mem::forget(shared_pk_buff);
+    let shared_pk_buff = shared_pk.into_boxed_slice();
+    let shared_pk_buff = std::mem::ManuallyDrop::new(shared_pk_buff);
 
-    let mut enc_hashes_buff = enc_hashes.into_boxed_slice();
-    let enc_hashes_size = enc_hashes_buff.clone().len();
-    let enc_hashes_ptr = enc_hashes_buff.as_mut_ptr();
-    std::mem::forget(enc_hashes_buff);
+    let enc_hashes_buff = enc_hashes.into_boxed_slice();
+    let enc_hashes_buff = std::mem::ManuallyDrop::new(enc_hashes_buff);
 
     ResultChallenge {
-        pkey_ptr,
-        skey_ptr,
+        pkey_ptr: pkey_buff.as_ptr(),
+        skey_ptr: skey_buff.as_ptr(),
         key_size: KEY_SIZE,
-        shared_pubkey_ptr: shared_pk_ptr,
-        encrypted_hashes_size: enc_hashes_size,
-        encrypted_hashes_ptr: enc_hashes_ptr,
+        shared_pubkey_ptr: shared_pk_buff.as_ptr(),
+        encrypted_hashes_size: enc_hashes_buff.len(),
+        encrypted_hashes_ptr: enc_hashes_buff.as_ptr(),
         error: false,
     }
 }
@@ -153,28 +148,22 @@ pub unsafe extern "C" fn client_second_round(
         Err(_) => return ResultSecondRound::default(),
     };
 
-    let mut partial_enc_buff = partial_dec.into_boxed_slice();
-    let partial_enc_size = partial_enc_buff.len();
-    let partial_enc_ptr = partial_enc_buff.as_mut_ptr();
-    std::mem::forget(partial_enc_buff);
+    let partial_enc_buff = partial_dec.into_boxed_slice();
+    let partial_enc_buff = std::mem::ManuallyDrop::new(partial_enc_buff);
 
-    let mut proofs_buff = proofs.into_boxed_slice();
-    let proofs_size = proofs_buff.len();
-    let proofs_ptr = proofs_buff.as_mut_ptr();
-    std::mem::forget(proofs_buff);
+    let proofs_buff = proofs.into_boxed_slice();
+    let proofs_buff = std::mem::ManuallyDrop::new(proofs_buff);
 
-    let mut rand_vec_buff = rand_vec.into_boxed_slice();
-    let rand_vec_size = rand_vec_buff.len();
-    let rand_vec_ptr = rand_vec_buff.as_mut_ptr();
-    std::mem::forget(rand_vec_buff);
+    let rand_vec_buff = rand_vec.into_boxed_slice();
+    let rand_vec_buff = std::mem::ManuallyDrop::new(rand_vec_buff);
 
     ResultSecondRound {
-        encoded_partial_dec_ptr: partial_enc_ptr,
-        encoded_partial_dec_size: partial_enc_size,
-        encoded_proofs_ptr: proofs_ptr,
-        encoded_proofs_size: proofs_size,
-        random_vec_ptr: rand_vec_ptr,
-        random_vec_size: rand_vec_size,
+        encoded_partial_dec_ptr: partial_enc_buff.as_ptr(),
+        encoded_partial_dec_size: partial_enc_buff.len(),
+        encoded_proofs_ptr: proofs_buff.as_ptr(),
+        encoded_proofs_size: proofs_buff.len(),
+        random_vec_ptr: rand_vec_buff.as_ptr(),
+        random_vec_size: rand_vec_buff.len(),
         error: false,
     }
 }
