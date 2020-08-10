@@ -79,9 +79,10 @@ namespace brave_private_channel {
     http_loader_->SetAllowHttpErrorResults(true);
 
     http_loader_->DownloadToString(
-      loader_factory, base::BindOnce(&PrivateChannel::OnPrivateChannelMetaLoadComplete,
-                      base::Unretained(this)),
-                      kMaxPrivateChannelServerResponseSizeBytes);
+      loader_factory,
+      base::BindOnce(&PrivateChannel::OnPrivateChannelMetaLoadComplete,
+        base::Unretained(this)),
+        kMaxPrivateChannelServerResponseSizeBytes);
   }
 
   void PrivateChannel::OnPrivateChannelMetaLoadComplete(
@@ -184,14 +185,14 @@ namespace brave_private_channel {
           base::Unretained(this),
           request_artefacts.client_sk,
           referral_code_,
-          input_size),
+          request_artefacts.encrypted_hashes_size),
         kMaxPrivateChannelServerResponseSizeBytes);
   }
 
   void PrivateChannel::OnPrivateChannelFirstRoundLoadComplete(
       std::string client_sk,
       std::string id,
-      int input_size,
+      int encrypted_hashes_size,
       std::unique_ptr<std::string> response_body) {
         LOG(INFO) << "PrivateChannel::OnPrivateChannelFirstRoundLoadComplete";
 
@@ -216,18 +217,18 @@ namespace brave_private_channel {
         }
 
         this->SecondRoundProtocol(
-          safe_response_body.c_str(), client_sk, id, input_size);
+          safe_response_body.c_str(), client_sk, id, encrypted_hashes_size);
   }
 
   void PrivateChannel::SecondRoundProtocol(
     const std::string& encrypted_input,
     std::string client_sk,
     std::string id,
-    int input_size) {
+    int encrypted_hashes_size) {
     LOG(INFO) << "PrivateChannel::SecondRoundProtocol";
 
     auto request_artefacts = SecondRound(
-      encrypted_input.c_str(), input_size, &client_sk[0]);
+      encrypted_input.c_str(), encrypted_hashes_size, &client_sk[0]);
 
     const std::string payload = base::StringPrintf(
       "rand_vec=%s&partial_dec=%s&proofs=%s&client_id=%s",
@@ -284,6 +285,26 @@ namespace brave_private_channel {
   void PrivateChannel::OnPrivateChannelSecondRoundLoadComplete(
       std::unique_ptr<std::string> response_body) {
         LOG(INFO) << "PrivateChannel::OnPrivateChannelSecondRoundLoadComplete";
+
+        int response_code = -1;
+        if (http_loader_->ResponseInfo() &&
+            http_loader_->ResponseInfo()->headers)
+          response_code =
+              http_loader_->ResponseInfo()->headers->response_code();
+
+        const std::string safe_response_body =
+          response_body ? *response_body : std::string();
+
+        if (http_loader_->NetError() != net::OK || response_code < 200 ||
+            response_code > 299) {
+          LOG(ERROR)
+              << "Failed run the second round of the private channels protocol"
+              << ", error: " << http_loader_->NetError()
+              << ", response code: " << response_code
+              << ", payload: " << safe_response_body
+              << ", url: " << http_loader_->GetFinalURL().spec();
+          return;
+        }
   }
 
 }  // namespace brave_private_channel

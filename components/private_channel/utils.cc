@@ -38,14 +38,3 @@ void parse_str_response(const char* ptr, uint8_t* dst) {
     i++;
   }
 }
-
-int get_size_response(const char* ptr) {
-  std::string str(ptr);
-  const char* str_ptr = str.c_str();
-  base::CStringTokenizer token(str_ptr, str_ptr + std::strlen(str_ptr), ", ");
-  int i = 0;
-  while (token.GetNext()) {
-    i++;
-  }
-  return i;
-}

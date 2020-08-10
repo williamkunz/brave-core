@@ -18,9 +18,9 @@ const int kMaxPrivateChannelServerResponseSizeBytes = 1024 * 1024;
 #define PRIVATE_CHANNEL_DEVELOPMENT_SERVER   \
 "https://repsys.rewards.brave.software"
 
-#define PRIVATE_CHANNEL_API_VERSION "/public/v1"
-#define PRIVATE_CHANNEL_META_ENDPOINT "/private-channel/meta"
-#define PRIVATE_CHANNEL_FIRST_ROUND_ENDPOINT "/private-channel/start"
-#define PRIVATE_CHANNEL_SECOND_ROUND_ENDPOINT "/private-channel/result"
+#define PRIVATE_CHANNEL_API_VERSION "/private-channel/v1"
+#define PRIVATE_CHANNEL_META_ENDPOINT "/meta"
+#define PRIVATE_CHANNEL_FIRST_ROUND_ENDPOINT "/attestation/start"
+#define PRIVATE_CHANNEL_SECOND_ROUND_ENDPOINT "/attestation/result"
 
 #endif  // BRAVE_COMPONENTS_PRIVATE_CHANNEL_BROWSER_STATIC_VALUES_H_

@@ -14,6 +14,7 @@
     std::string client_pk;
     std::string shared_pubkey;
     std::string encrypted_hashes;
+    int encrypted_hashes_size;
     bool error;
 
     ChallengeArtefacts();

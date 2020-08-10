@@ -1,5 +1,10 @@
-#ifndef PRIVATE_CHANNEL_RUST_FFI_H
-#define PRIVATE_CHANNEL_RUST_FFI_H
+/* Copyright 2020 The Brave Authors. All rights reserved.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#ifndef BRAVE_COMPONENTS_PRIVATE_CHANNEL_RUST_FFI_SRC_LIB_H_
+#define BRAVE_COMPONENTS_PRIVATE_CHANNEL_RUST_FFI_SRC_LIB_H_
 
 #include <stdarg.h>
 #include <stdbool.h>
@@ -43,4 +48,4 @@ void deallocate_first_round_result(C_ResultChallenge result);
 
 void deallocate_second_round_result(C_ResultSecondRound result);
 
-#endif /* PRIVATE_CHANNEL_RUST_FFI_H */
+#endif /* BRAVE_COMPONENTS_PRIVATE_CHANNEL_RUST_FFI_SRC_LIB_H_ */

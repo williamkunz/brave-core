@@ -12,9 +12,9 @@
 
 #define KEY_SIZE 32
 
-char const *SERVER_PK = "[78, 181, 75, 245, 70, 218, 146, 152, 155, 118, 20, 184, 203, 179, 192, 222, 212, 79, 178, 76, 232, 250, 218, 196, 6, 254, 139, 145, 172, 18, 189, 13]";
+char const *SERVER_PK = "[78, 181, 75, 245, 70, 218, 146, 152, 155, 118, 20, 184, 203, 179, 192, 222, 212, 79, 178, 76, 232, 250, 218, 196, 6, 254, 139, 145, 172, 18, 189, 13]"; // NOLINT
 
-char const *SERVER_PK_MALFORMED = "[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 179, 192, 222, 212, 79, 178, 76, 232, 250, 218, 196, 6, 254, 139, 0, 172, 18, 189]";
+char const *SERVER_PK_MALFORMED = "[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 179, 192, 222, 212, 79, 178, 76, 232, 250, 218, 196, 6, 254, 139, 0, 172, 18, 189]"; // NOLINT
 
 const uint8_t MOCK_SERVER_REPLY[] = {2, 0, 0, 0, 0, 0, 0, 0, 240, 197, 94, 143,
   166, 246, 59, 57, 250, 7, 154, 51, 170, 222, 189, 5, 77, 90, 79, 68, 211,
@@ -49,7 +49,7 @@ void TestEndToEnd() {
 }
 
 void TestBadPubkey() {
-	std::string sig1 = "signal1";
+  std::string sig1 = "signal1";
   std::string sig2 = "signal2";
   const char* input[] = {sig1.c_str(), sig2.c_str()};
 
@@ -64,5 +64,5 @@ void TestBadPubkey() {
 
 int main() {
   TestEndToEnd();
-	TestBadPubkey();
+  TestBadPubkey();
 }

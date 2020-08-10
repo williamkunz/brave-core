@@ -33,6 +33,7 @@
   artefacts.shared_pubkey = convert_to_str(results.shared_pubkey_ptr, key_size);
   artefacts.encrypted_hashes = convert_to_str(
     results.encrypted_hashes_ptr, results.encrypted_hashes_size);
+  artefacts.encrypted_hashes_size = results.encrypted_hashes_size;
   artefacts.error = results.error;
 
   private_channel::free_first_round_result(results);
@@ -41,15 +42,15 @@
   }
 
   SecondRoundArtefacts SecondRound(
-    const char* enc_input, int size, const char* client_sk) {
+    const char* enc_input, int enc_input_size, const char* client_sk) {
 
-  uint kInputSize = get_size_response(enc_input);
+  const int kInputSize = enc_input_size;
   uint8_t enc_buffer[kInputSize];
   parse_str_response(enc_input, enc_buffer);
 
   struct SecondRoundArtefacts artefacts;
   auto results =
-    private_channel::second_round(enc_buffer, size, client_sk);
+    private_channel::second_round(enc_buffer, enc_input_size, client_sk);
 
   artefacts.partial_decryption = convert_to_str(
     results.encoded_partial_dec_ptr, results.encoded_partial_dec_size);
