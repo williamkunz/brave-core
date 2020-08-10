@@ -121,7 +121,7 @@ void DatabaseServerPublisherBanner::GetRecord(
           publisher_key,
           callback);
 
-  ledger_->ledger_client()->RunDBTransaction(
+  ledger_->RunDBTransaction(
       std::move(transaction),
       transaction_callback);
 }

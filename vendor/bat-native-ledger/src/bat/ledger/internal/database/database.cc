@@ -60,10 +60,8 @@ Database::Database(bat_ledger::LedgerImpl* ledger) :
 
 Database::~Database() = default;
 
-void Database::Initialize(
-    const bool execute_create_script,
-    ledger::ResultCallback callback) {
-  initialize_->Start(execute_create_script, callback);
+void Database::Initialize(ledger::ResultCallback callback) {
+  initialize_->Start(callback);
 }
 
 /**

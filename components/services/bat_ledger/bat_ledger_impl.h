@@ -35,7 +35,7 @@ class BatLedgerImpl :
 
   // bat_ledger::mojom::BatLedger
   void Initialize(
-    const bool execute_create_script,
+    ledger::InitializeOptionsPtr options,
     InitializeCallback callback) override;
   void CreateWallet(CreateWalletCallback callback) override;
   void GetRewardsParameters(GetRewardsParametersCallback callback) override;

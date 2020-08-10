@@ -17,6 +17,7 @@
 #include "bat/ledger/internal/api/api.h"
 #include "bat/ledger/internal/contribution/contribution.h"
 #include "bat/ledger/internal/database/database.h"
+#include "bat/ledger/internal/ledger_database.h"
 #include "bat/ledger/internal/logging.h"
 #include "bat/ledger/internal/media/media.h"
 #include "bat/ledger/internal/promotion/promotion.h"
@@ -76,6 +77,10 @@ class LedgerImpl : public ledger::Ledger {
       const ledger::UrlMethod method,
       ledger::LoadURLCallback callback);
 
+  void RunDBTransaction(
+      ledger::DBTransactionPtr transaction,
+      ledger::RunDBTransactionCallback callback);
+
  private:
   void OnInitialized(
       const ledger::Result result,
@@ -88,16 +93,23 @@ class LedgerImpl : public ledger::Ledger {
       ledger::ResultCallback callback);
 
   void InitializeDatabase(
-      const bool execute_create_script,
+      const std::string& database_path,
       ledger::ResultCallback callback);
 
   void OnDatabaseInitialized(
       const ledger::Result result,
       ledger::ResultCallback callback);
 
+  ledger::DBCommandResponsePtr RunDBTransactionOnTaskRunner(
+      ledger::DBTransactionPtr transaction);
+
+  void OnRunDBTransaction(
+      ledger::RunDBTransactionCallback callback,
+      ledger::DBCommandResponsePtr response);
+
   // ledger.h
   void Initialize(
-      const bool execute_create_script,
+      ledger::InitializeOptionsPtr options,
       ledger::ResultCallback callback) override;
 
   void CreateWallet(ledger::ResultCallback callback) override;
@@ -346,6 +358,7 @@ class LedgerImpl : public ledger::Ledger {
   std::unique_ptr<braveledger_sku::SKU> sku_;
   std::unique_ptr<braveledger_state::State> state_;
   std::unique_ptr<braveledger_api::API> api_;
+  std::unique_ptr<ledger::LedgerDatabase> ledger_database_;
   scoped_refptr<base::SequencedTaskRunner> task_runner_;
   bool initialized_task_scheduler_;
 

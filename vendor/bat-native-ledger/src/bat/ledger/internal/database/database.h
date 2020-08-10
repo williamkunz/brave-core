@@ -48,9 +48,7 @@ class Database {
   explicit Database(bat_ledger::LedgerImpl* ledger);
   virtual ~Database();
 
-  void Initialize(
-      const bool execute_create_script,
-      ledger::ResultCallback callback);
+  void Initialize(ledger::ResultCallback callback);
 
   /**
    * ACTIVITY INFO

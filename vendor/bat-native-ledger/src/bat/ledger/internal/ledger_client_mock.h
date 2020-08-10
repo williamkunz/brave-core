@@ -165,10 +165,6 @@ class MockLedgerClient : public LedgerClient {
 
   MOCK_METHOD0(ReconcileStampReset, void());
 
-  MOCK_METHOD2(RunDBTransaction, void(
-      ledger::DBTransactionPtr,
-      ledger::RunDBTransactionCallback));
-
   MOCK_METHOD1(GetCreateScript, void(ledger::GetCreateScriptCallback));
 
   MOCK_METHOD1(PendingContributionSaved, void(const ledger::Result result));

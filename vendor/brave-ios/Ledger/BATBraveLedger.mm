@@ -29,7 +29,6 @@
 #import "url/gurl.h"
 #import "net/base/registry_controlled_domains/registry_controlled_domain.h"
 #import "base/strings/sys_string_conversions.h"
-#import "brave/components/brave_rewards/browser/rewards_database.h"
 
 #import "base/i18n/icu_util.h"
 #import "base/ios/ios_util.h"
@@ -93,7 +92,6 @@ typedef NS_ENUM(NSInteger, BATLedgerDatabaseMigrationType) {
 @interface BATBraveLedger () <NativeLedgerClientBridge> {
   NativeLedgerClient *ledgerClient;
   ledger::Ledger *ledger;
-  brave_rewards::RewardsDatabase *rewardsDatabase;
 }
 @property (nonatomic, copy) NSString *storagePath;
 @property (nonatomic) BATRewardsParameters *rewardsParameters;
@@ -142,7 +140,6 @@ typedef NS_ENUM(NSInteger, BATLedgerDatabaseMigrationType) {
     self.mFinishedPromotions = [[NSMutableArray alloc] init];
     self.mExternalWallets = [[NSMutableDictionary alloc] init];
     self.observers = [NSHashTable weakObjectsHashTable];
-    rewardsDatabase = nullptr;
     
     self.prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:[self prefsPath]];
     if (!self.prefs) {
@@ -164,19 +161,12 @@ typedef NS_ENUM(NSInteger, BATLedgerDatabaseMigrationType) {
     }
     
     self.databaseQueue = dispatch_queue_create("com.rewards.db-transactions", DISPATCH_QUEUE_SERIAL);
-    
-    const auto* dbPath = [self rewardsDatabasePath].UTF8String;
-    rewardsDatabase = new brave_rewards::RewardsDatabase(base::FilePath(dbPath));
 
     ledgerClient = new NativeLedgerClient(self);
     ledger = ledger::Ledger::CreateInstance(ledgerClient);
 
     self.migrationType = BATLedgerDatabaseMigrationTypeDefault;
-    BOOL needsMigration = [self databaseNeedsMigration];
-    if (needsMigration) {
-      [BATLedgerDatabase deleteCoreDataServerPublisherList:nil];
-    }
-    [self initializeLedgerService:needsMigration];
+    [self initializeLedgerService];
     
     // Add notifications for standard app foreground/background
     [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(applicationDidBecomeActive) name:UIApplicationDidBecomeActiveNotification object:nil];
@@ -200,18 +190,19 @@ typedef NS_ENUM(NSInteger, BATLedgerDatabaseMigrationType) {
 
   delete ledger;
   delete ledgerClient;
-  delete rewardsDatabase;
 }
 
-- (void)initializeLedgerService:(BOOL)executeMigrateScript
+- (void)initializeLedgerService
 {
   if (self.initialized || self.initializing) {
     return;
   }
   self.initializing = YES;
-  
-  BLOG(3, @"DB: Migrate from CoreData? %@", (executeMigrateScript ? @"YES" : @"NO"));
-  ledger->Initialize(executeMigrateScript, ^(ledger::Result result){
+
+  auto options = ledger::InitializeOptions::New();
+  options->database_path = [self rewardsDatabasePath].UTF8String;
+
+  ledger->Initialize(std::move(options), ^(ledger::Result result){
     self.initialized = (result == ledger::Result::LEDGER_OK ||
                         result == ledger::Result::NO_LEDGER_STATE ||
                         result == ledger::Result::NO_PUBLISHER_STATE);
@@ -233,16 +224,14 @@ typedef NS_ENUM(NSInteger, BATLedgerDatabaseMigrationType) {
             self.dataMigrationFailed = YES;
             self.migrationType = BATLedgerDatabaseMigrationTypeTokensOnly;
             [self resetRewardsDatabase];
-            // attempt re-initialize without other data
-            [self initializeLedgerService:YES];
+            [self initializeLedgerService];
             return;
           case BATLedgerDatabaseMigrationTypeTokensOnly:
             BLOG(0, @"DB: BAT only migration failed. Initializing without migration.");
             self.dataMigrationFailed = YES;
             self.migrationType = BATLedgerDatabaseMigrationTypeNone;
             [self resetRewardsDatabase];
-            // attempt initialize without migrating at all
-            [self initializeLedgerService:NO];
+            [self initializeLedgerService];
             return;
           default:
             break;
@@ -258,58 +247,6 @@ typedef NS_ENUM(NSInteger, BATLedgerDatabaseMigrationType) {
   });
 }
 
-- (BOOL)databaseNeedsMigration
-{
-  // Check if we even have a DB to migrate
-  if (!DataController.defaultStoreExists) {
-    return NO;
-  }
-  // Have we set the pref saying ledger has alaready initialized successfully?
-  if ([self.prefs[kMigrationSucceeded] boolValue]) {
-    return NO;
-  }
-  // Can we even check the DB
-  if (!rewardsDatabase) {
-    BLOG(3, @"DB: No rewards database object");
-    return YES;
-  }
-  // Check integrity of the new DB. Safe to assume if `publisher_info` table
-  // exists, then all the others do as well.
-  auto transaction = ledger::DBTransaction::New();
-  const auto command = ledger::DBCommand::New();
-  command->type = ledger::DBCommand::Type::READ;
-  command->command = "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'publisher_info';";
-  command->record_bindings = { ledger::DBCommand::RecordBindingType::STRING_TYPE };
-  transaction->commands.push_back(command->Clone());
-  
-  auto response = ledger::DBCommandResponse::New();
-  rewardsDatabase->RunTransaction(std::move(transaction), response.get());
-  
-  // Failed to even run the check, tables probably don't exist,
-  // restart from scratch
-  if (response->status != ledger::DBCommandResponse::Status::RESPONSE_OK) {
-    [self resetRewardsDatabase];
-    BLOG(3, @"DB: Failed to run transaction with status: %d", response->status);
-    return YES;
-  }
-  
-  const auto record = std::move(response->result->get_records());
-  // sqlite_master table exists, but the publisher_info table doesn't exist?
-  // Restart from scratch
-  if (record.empty() || record.front()->fields.empty()) {
-    [self resetRewardsDatabase];
-    BLOG(3, @"DB: Migrate because we couldnt find tables in sqlite_master");
-    return YES;
-  }
-  
-  // Tables exist so migration has happened already, but somehow the flag wasn't
-  // saved.
-  self.prefs[kMigrationSucceeded] = @(YES);
-  [self savePrefs];
-  
-  return NO;
-}
-
 - (NSString *)rewardsDatabasePath
 {
   return [self.storagePath stringByAppendingPathComponent:@"Rewards.db"];
@@ -317,29 +254,37 @@ typedef NS_ENUM(NSInteger, BATLedgerDatabaseMigrationType) {
 
 - (void)resetRewardsDatabase
 {
-  delete rewardsDatabase;
   const auto dbPath = [self rewardsDatabasePath];
   [NSFileManager.defaultManager removeItemAtPath:dbPath error:nil];
   [NSFileManager.defaultManager removeItemAtPath:[dbPath stringByAppendingString:@"-journal"] error:nil];
-  rewardsDatabase = new brave_rewards::RewardsDatabase(base::FilePath(dbPath.UTF8String));
 }
 
 - (void)getCreateScript:(ledger::GetCreateScriptCallback)callback
 {
+  if ([self.prefs[kMigrationSucceeded] boolValue] ||
+      !DataController.defaultStoreExists) {
+    callback("", 0);
+    return;
+  }
+
+  [BATLedgerDatabase deleteCoreDataServerPublisherList:nil];
+
   NSString *migrationScript = @"";
+
   switch (self.migrationType) {
     case BATLedgerDatabaseMigrationTypeNone:
-      // We shouldn't be migrating, therefore doesn't make sense that
-      // `getCreateScript` was called
-      BLOG(0, @"DB: Attempted CoreData migration with an empty migration script");
+      BLOG(1, @"DB: Skipping CoreData migration");
       break;
     case BATLedgerDatabaseMigrationTypeTokensOnly:
+      BLOG(1, @"DB: Migrating CoreData (tokens-only)");
       migrationScript = [BATLedgerDatabase migrateCoreDataBATOnlyToSQLTransaction];
       break;
     case BATLedgerDatabaseMigrationTypeDefault:
     default:
+      BLOG(1, @"DB: Migrating CoreData");
       migrationScript = [BATLedgerDatabase migrateCoreDataToSQLTransaction];
   }
+
   callback(migrationScript.UTF8String, 10);
 }
 
@@ -1883,25 +1828,6 @@ BATLedgerBridge(BOOL,
     if (observer.reconcileStampReset) {
       observer.reconcileStampReset();
     }
-  }
-}
-
-- (void)runDBTransaction:(ledger::DBTransactionPtr)transaction
-                callback:(ledger::RunDBTransactionCallback)callback
-{
-  if (!rewardsDatabase || transaction.get() == nullptr) {
-    auto response = ledger::DBCommandResponse::New();
-    response->status = ledger::DBCommandResponse::Status::RESPONSE_ERROR;
-    callback(std::move(response));
-  } else {
-    __block auto transactionClone = transaction->Clone();
-    dispatch_async(self.databaseQueue, ^{
-      __block auto response = ledger::DBCommandResponse::New();
-      rewardsDatabase->RunTransaction(std::move(transactionClone), response.get());
-      dispatch_async(dispatch_get_main_queue(), ^{
-        callback(std::move(response));
-      });
-    });
   }
 }
 

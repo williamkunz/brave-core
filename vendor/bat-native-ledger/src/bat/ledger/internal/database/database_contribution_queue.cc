@@ -71,7 +71,7 @@ void DatabaseContributionQueue::InsertOrUpdate(
           braveledger_bind_util::FromContributionQueueToString(info->Clone()),
           callback);
 
-  ledger_->ledger_client()->RunDBTransaction(
+  ledger_->RunDBTransaction(
       std::move(transaction),
       transaction_callback);
 }
@@ -132,7 +132,7 @@ void DatabaseContributionQueue::GetFirstRecord(
           _1,
           callback);
 
-  ledger_->ledger_client()->RunDBTransaction(
+  ledger_->RunDBTransaction(
       std::move(transaction),
       transaction_callback);
 }
@@ -216,7 +216,7 @@ void DatabaseContributionQueue::MarkRecordAsComplete(
       _1,
       callback);
 
-  ledger_->ledger_client()->RunDBTransaction(
+  ledger_->RunDBTransaction(
       std::move(transaction),
       transaction_callback);
 }

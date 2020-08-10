@@ -23,9 +23,7 @@ DatabaseInitialize::DatabaseInitialize(bat_ledger::LedgerImpl* ledger) :
 
 DatabaseInitialize::~DatabaseInitialize() = default;
 
-void DatabaseInitialize::Start(
-    const bool execute_create_script,
-    ledger::ResultCallback callback) {
+void DatabaseInitialize::Start(ledger::ResultCallback callback) {
   auto transaction = ledger::DBTransaction::New();
   transaction->version = GetCurrentVersion();
   transaction->compatible_version = GetCompatibleVersion();
@@ -33,28 +31,21 @@ void DatabaseInitialize::Start(
   command->type = ledger::DBCommand::Type::INITIALIZE;
   transaction->commands.push_back(std::move(command));
 
-  ledger_->ledger_client()->RunDBTransaction(
+  ledger_->RunDBTransaction(
       std::move(transaction),
       std::bind(&DatabaseInitialize::OnInitialize,
           this,
           _1,
-          execute_create_script,
           callback));
 }
 
 void DatabaseInitialize::OnInitialize(
     ledger::DBCommandResponsePtr response,
-    const bool execute_create_script,
     ledger::ResultCallback callback) {
   if (!response ||
       response->status != ledger::DBCommandResponse::Status::RESPONSE_OK) {
     BLOG(0, "Response is wrong");
     callback(ledger::Result::DATABASE_INIT_FAILED);
-    return;
-  }
-
-  if (execute_create_script) {
-    GetCreateScript(callback);
     return;
   }
 
@@ -66,9 +57,13 @@ void DatabaseInitialize::OnInitialize(
     return;
   }
 
-  const auto current_table_version =
-      response->result->get_value()->get_int_value();
-  migration_->Start(current_table_version, callback);
+  const auto current_version = response->result->get_value()->get_int_value();
+  if (current_version <= 0) {
+    GetCreateScript(callback);
+    return;
+  }
+
+  migration_->Start(current_version, callback);
 }
 
 void DatabaseInitialize::GetCreateScript(ledger::ResultCallback callback) {
@@ -85,8 +80,7 @@ void DatabaseInitialize::ExecuteCreateScript(
     const int table_version,
     ledger::ResultCallback callback) {
   if (script.empty()) {
-    BLOG(1, "Script is empty");
-    callback(ledger::Result::LEDGER_ERROR);
+    migration_->Start(0, callback);
     return;
   }
 
@@ -104,7 +98,7 @@ void DatabaseInitialize::ExecuteCreateScript(
   command->command = script;
   transaction->commands.push_back(std::move(command));
 
-  ledger_->ledger_client()->RunDBTransaction(
+  ledger_->RunDBTransaction(
       std::move(transaction),
       script_callback);
 }

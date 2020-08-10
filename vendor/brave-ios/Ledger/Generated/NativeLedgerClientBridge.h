@@ -46,7 +46,6 @@
 - (ledger::ClientInfoPtr)getClientInfo;
 - (void)unblindedTokensReady;
 - (void)reconcileStampReset;
-- (void)runDBTransaction:(ledger::DBTransactionPtr)transaction callback:(ledger::RunDBTransactionCallback)callback;
 - (void)getCreateScript:(ledger::GetCreateScriptCallback)callback;
 - (void)pendingContributionSaved:(const ledger::Result)result;
 - (void)clearAllNotifications;

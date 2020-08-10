@@ -94,7 +94,7 @@ void DatabaseContributionInfoPublishers::GetRecordByContributionList(
       _1,
       callback);
 
-  ledger_->ledger_client()->RunDBTransaction(
+  ledger_->RunDBTransaction(
       std::move(transaction),
       transaction_callback);
 }
@@ -171,7 +171,7 @@ void DatabaseContributionInfoPublishers::GetContributionPublisherPairList(
       _1,
       callback);
 
-  ledger_->ledger_client()->RunDBTransaction(
+  ledger_->RunDBTransaction(
       std::move(transaction),
       transaction_callback);
 }
@@ -242,7 +242,7 @@ void DatabaseContributionInfoPublishers::UpdateContributedAmount(
       _1,
       callback);
 
-  ledger_->ledger_client()->RunDBTransaction(
+  ledger_->RunDBTransaction(
       std::move(transaction),
       transaction_callback);
 }

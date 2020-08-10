@@ -67,8 +67,8 @@ class LEDGER_EXPORT Ledger {
   static Ledger* CreateInstance(LedgerClient* client);
 
   virtual void Initialize(
-      const bool execute_create_script,
-      ResultCallback) = 0;
+      ledger::InitializeOptionsPtr options,
+      ResultCallback callback) = 0;
 
   // returns false if wallet initialization is already in progress
   virtual void CreateWallet(ResultCallback callback) = 0;

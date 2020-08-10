@@ -132,6 +132,31 @@ void LedgerImpl::LoadURL(
       callback);
 }
 
+void LedgerImpl::RunDBTransaction(
+    ledger::DBTransactionPtr transaction,
+    ledger::RunDBTransactionCallback callback) {
+  DCHECK(ledger_database_);
+  task_runner_->PostTaskAndReplyWithResult(
+      FROM_HERE,
+      base::BindOnce(&LedgerImpl::RunDBTransactionOnTaskRunner,
+          base::Unretained(this),
+          base::Passed(std::move(transaction))),
+      base::BindOnce(&LedgerImpl::OnRunDBTransaction,
+          base::Unretained(this),
+          std::move(callback)));
+}
+
+ledger::DBCommandResponsePtr LedgerImpl::RunDBTransactionOnTaskRunner(
+    ledger::DBTransactionPtr transaction) {
+  return ledger_database_->RunTransaction(std::move(transaction));
+}
+
+void LedgerImpl::OnRunDBTransaction(
+    ledger::RunDBTransactionCallback callback,
+    ledger::DBCommandResponsePtr response) {
+  callback(std::move(response));
+}
+
 void LedgerImpl::StartServices() {
   if (!IsWalletCreated()) {
     return;
@@ -147,7 +172,7 @@ void LedgerImpl::StartServices() {
 }
 
 void LedgerImpl::Initialize(
-    const bool execute_create_script,
+    ledger::InitializeOptionsPtr options,
     ledger::ResultCallback callback) {
   DCHECK(!initializing_);
   if (initializing_) {
@@ -156,12 +181,15 @@ void LedgerImpl::Initialize(
   }
 
   initializing_ = true;
-  InitializeDatabase(execute_create_script, callback);
+  InitializeDatabase(options->database_path, callback);
 }
 
 void LedgerImpl::InitializeDatabase(
-    const bool execute_create_script,
+    const std::string& database_path,
     ledger::ResultCallback callback) {
+  ledger_database_.reset(
+      new ledger::LedgerDatabase(base::FilePath(database_path)));
+
   ledger::ResultCallback finish_callback = std::bind(
       &LedgerImpl::OnInitialized,
       this,
@@ -172,7 +200,7 @@ void LedgerImpl::InitializeDatabase(
       this,
       _1,
       finish_callback);
-  database()->Initialize(execute_create_script, database_callback);
+  database()->Initialize(database_callback);
 }
 
 void LedgerImpl::OnInitialized(

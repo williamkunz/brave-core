@@ -250,6 +250,8 @@ source_set("ledger") {
     "src/bat/ledger/internal/database/database_util.h",
     "src/bat/ledger/internal/ledger_impl.cc",
     "src/bat/ledger/internal/ledger_impl.h",
+    "src/bat/ledger/internal/ledger_database.cc",
+    "src/bat/ledger/internal/ledger_database.h",
     "src/bat/ledger/internal/logging_util.cc",
     "src/bat/ledger/internal/logging_util.h",
     "src/bat/ledger/internal/logging.cc",

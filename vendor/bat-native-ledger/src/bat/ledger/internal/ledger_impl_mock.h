@@ -27,7 +27,8 @@ class MockLedgerImpl : public LedgerImpl {
 
   MOCK_CONST_METHOD0(database, braveledger_database::Database*());
 
-  MOCK_METHOD2(Initialize, void(const bool, ledger::ResultCallback));
+  MOCK_METHOD2(Initialize,
+      void(ledger::InitializeOptionsPtr, ledger::ResultCallback));
 };
 
 }  // namespace bat_ledger

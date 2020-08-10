@@ -53,7 +53,6 @@ private:
   ledger::ClientInfoPtr GetClientInfo() override;
   void UnblindedTokensReady() override;
   void ReconcileStampReset() override;
-  void RunDBTransaction(ledger::DBTransactionPtr transaction, ledger::RunDBTransactionCallback callback) override;
   void GetCreateScript(ledger::GetCreateScriptCallback callback) override;
   void PendingContributionSaved(const ledger::Result result) override;
   void ClearAllNotifications() override;

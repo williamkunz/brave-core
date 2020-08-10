@@ -130,10 +130,6 @@ class LedgerClientMojoBridge :
 
   void ReconcileStampReset() override;
 
-  void RunDBTransaction(
-      ledger::DBTransactionPtr transaction,
-      RunDBTransactionCallback callback) override;
-
   void GetCreateScript(
       GetCreateScriptCallback callback) override;
 
@@ -189,10 +185,6 @@ class LedgerClientMojoBridge :
   static void OnShowNotification(
     CallbackHolder<ShowNotificationCallback>* holder,
     const ledger::Result result);
-
-  static void OnRunDBTransaction(
-      CallbackHolder<RunDBTransactionCallback>* holder,
-      ledger::DBCommandResponsePtr response);
 
   static void OnGetCreateScript(
       CallbackHolder<GetCreateScriptCallback>* holder,

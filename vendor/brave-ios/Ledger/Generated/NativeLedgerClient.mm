@@ -125,9 +125,6 @@ void NativeLedgerClient::UnblindedTokensReady() {
 void NativeLedgerClient::ReconcileStampReset() {
   [bridge_ reconcileStampReset];
 }
-void NativeLedgerClient::RunDBTransaction(ledger::DBTransactionPtr transaction, ledger::RunDBTransactionCallback callback) {
-  [bridge_ runDBTransaction:std::move(transaction) callback:callback];
-}
 void NativeLedgerClient::GetCreateScript(ledger::GetCreateScriptCallback callback) {
   [bridge_ getCreateScript:callback];
 }

@@ -40,13 +40,14 @@ void BatLedgerImpl::OnInitialize(
   }
   delete holder;
 }
+
 void BatLedgerImpl::Initialize(
-    const bool execute_create_script,
+    ledger::InitializeOptionsPtr options,
     InitializeCallback callback) {
   auto* holder = new CallbackHolder<InitializeCallback>(
       AsWeakPtr(), std::move(callback));
   ledger_->Initialize(
-      execute_create_script,
+      std::move(options),
       std::bind(BatLedgerImpl::OnInitialize, holder, _1));
 }
 

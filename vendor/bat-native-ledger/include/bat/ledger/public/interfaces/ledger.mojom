@@ -4,6 +4,10 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 module ledger.mojom;
 
+struct InitializeOptions {
+  string database_path;
+};
+
 enum ContributionStep {
   STEP_RETRY_COUNT = -7,
   STEP_AC_OFF = -6,

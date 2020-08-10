@@ -17,6 +17,9 @@ namespace ledger {
 /**
  * LEDGER
  */
+using InitializeOptions = mojom::InitializeOptions;
+using InitializeOptionsPtr = mojom::InitializeOptionsPtr;
+
 using ActivityInfoFilter = mojom::ActivityInfoFilter;
 using ActivityInfoFilterPtr = mojom::ActivityInfoFilterPtr;
 

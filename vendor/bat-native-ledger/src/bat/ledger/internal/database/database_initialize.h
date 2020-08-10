@@ -23,14 +23,11 @@ class DatabaseInitialize {
   explicit DatabaseInitialize(bat_ledger::LedgerImpl* ledger);
   ~DatabaseInitialize();
 
-  void Start(
-      const bool execute_create_script,
-      ledger::ResultCallback callback);
+  void Start(ledger::ResultCallback callback);
 
  private:
   void OnInitialize(
       ledger::DBCommandResponsePtr response,
-      const bool execute_create_script,
       ledger::ResultCallback callback);
 
   void EnsureCurrentVersion(

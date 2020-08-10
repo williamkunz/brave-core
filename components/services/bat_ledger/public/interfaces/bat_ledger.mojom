@@ -25,7 +25,7 @@ interface BatLedgerService {
 };
 
 interface BatLedger {
-  Initialize(bool execute_create_script) => (ledger.mojom.Result result);
+  Initialize(ledger.mojom.InitializeOptions options) => (ledger.mojom.Result result);
   CreateWallet() => (ledger.mojom.Result result);
   GetRewardsParameters() => (ledger.mojom.RewardsParameters properties);
 
@@ -63,7 +63,7 @@ interface BatLedger {
   AttestPromotion(string promotion_id, string solution) => (ledger.mojom.Result result, ledger.mojom.Promotion? promotion);
   GetWalletPassphrase() => (string wallet_passphrase);
   RecoverWallet(string passPhrase) => (ledger.mojom.Result result);
-  
+
   SetRewardsMainEnabled(bool enabled);
   SetPublisherMinVisitTime(int32 duration_in_seconds);
   SetPublisherMinVisits(int32 visits);
@@ -225,8 +225,6 @@ interface BatLedgerClient {
   UnblindedTokensReady();
 
   ReconcileStampReset();
-
-  RunDBTransaction(ledger_database.mojom.DBTransaction transaction) => (ledger_database.mojom.DBCommandResponse response);
 
   GetCreateScript() => (string script, int32 table_version);
 

@@ -316,30 +316,6 @@ void LedgerClientMojoBridge::ReconcileStampReset() {
 }
 
 // static
-void LedgerClientMojoBridge::OnRunDBTransaction(
-    CallbackHolder<RunDBTransactionCallback>* holder,
-    ledger::DBCommandResponsePtr response) {
-  DCHECK(holder);
-  if (holder->is_valid()) {
-    std::move(holder->get()).Run(std::move(response));
-  }
-  delete holder;
-}
-
-void LedgerClientMojoBridge::RunDBTransaction(
-    ledger::DBTransactionPtr transaction,
-    RunDBTransactionCallback callback) {
-  auto* holder = new CallbackHolder<RunDBTransactionCallback>(
-      AsWeakPtr(),
-      std::move(callback));
-  ledger_client_->RunDBTransaction(
-      std::move(transaction),
-      std::bind(LedgerClientMojoBridge::OnRunDBTransaction,
-                holder,
-                _1));
-}
-
-// static
 void LedgerClientMojoBridge::OnGetCreateScript(
     CallbackHolder<GetCreateScriptCallback>* holder,
     const std::string& script,
