@@ -33,7 +33,7 @@ typedef struct {
   bool error;
 } C_ResultChallenge;
 
-C_ResultSecondRound client_second_round(const uint8_t *input,
+C_ResultSecondRound client_second_round(const char *input,
                                         int input_size,
                                         const char *client_sk_encoded);
 

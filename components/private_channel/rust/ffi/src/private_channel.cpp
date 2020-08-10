@@ -30,7 +30,7 @@ namespace private_channel {
   }
 
   ResultSecondRound second_round(
-    const uint8_t* enc_input_ptr, int input_size, const char*  sk) {
+    const char* enc_input_ptr, int input_size, const char*  sk) {
       C_ResultSecondRound c_result =
         client_second_round(enc_input_ptr, input_size, sk);
 

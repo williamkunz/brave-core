@@ -22,19 +22,3 @@ std::string convert_to_str(const uint8_t* ptr, int size) {
   str.append("]");
   return str;
 }
-
-void parse_str_response(const char* ptr, uint8_t* dst) {
-  std::string str(ptr);
-
-  // remove parenthesis
-  str.pop_back();
-  str.erase(str.begin());
-  const char* str_ptr = str.c_str();
-
-  base::CStringTokenizer token(str_ptr, str_ptr + std::strlen(str_ptr), ", ");
-  uint i = 0;
-  while (token.GetNext()) {
-    dst[i] = std::stoi(token.token().c_str());
-    i++;
-  }
-}

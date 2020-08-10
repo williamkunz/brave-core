@@ -122,8 +122,8 @@ pub unsafe extern "C" fn client_start_challenge(
 
 #[no_mangle]
 pub unsafe extern "C" fn client_second_round(
-    input: *const u8,
-    input_size: c_int,
+    input: *const c_char,
+    _input_size: c_int,
     client_sk_encoded: *const c_char,
 ) -> ResultSecondRound {
     assert!(!input.is_null(), "Null pointers passed as input");
@@ -137,13 +137,21 @@ pub unsafe extern "C" fn client_second_round(
         Err(_) => return ResultSecondRound::default(),
     };
 
-    let v_enc = slice::from_raw_parts(input, input_size as usize);
+    let raw_str = match CStr::from_ptr(input).to_str() {
+        Ok(s) => s.to_string(),
+        Err(_) => return ResultSecondRound::default(),
+    };
+    let parsed_str = raw_str.replace(&['[', ']'][..], "");
+    let v_enc: Vec<u8> = parsed_str
+        .split(", ")
+        .map(|s| s.parse::<u8>().unwrap())
+        .collect();
 
     let brave_private_channel::SecondRoundOutput {
         partial_dec,
         proofs,
         rand_vec,
-    } = match brave_private_channel::second_round(v_enc, client_sk) {
+    } = match brave_private_channel::second_round(&v_enc, client_sk) {
         Ok(result) => result,
         Err(_) => return ResultSecondRound::default(),
     };

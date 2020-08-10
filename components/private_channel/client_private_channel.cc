@@ -44,13 +44,9 @@
   SecondRoundArtefacts SecondRound(
     const char* enc_input, int enc_input_size, const char* client_sk) {
 
-  const int kInputSize = enc_input_size;
-  uint8_t enc_buffer[kInputSize];
-  parse_str_response(enc_input, enc_buffer);
-
   struct SecondRoundArtefacts artefacts;
   auto results =
-    private_channel::second_round(enc_buffer, enc_input_size, client_sk);
+    private_channel::second_round(enc_input, enc_input_size, client_sk);
 
   artefacts.partial_decryption = convert_to_str(
     results.encoded_partial_dec_ptr, results.encoded_partial_dec_size);

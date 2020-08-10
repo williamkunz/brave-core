@@ -39,7 +39,7 @@ namespace private_channel {
     const char* const* input_ptr, int size, const char* server_pk);
 	
   ResultSecondRound second_round(
-    const uint8_t* enc_input_ptr, int size,  const char* sk);
+    const char* enc_input_ptr, int size,  const char* sk);
 
   void free_first_round_result(ResultChallenge result);
 
