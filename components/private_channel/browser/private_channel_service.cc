@@ -9,6 +9,7 @@
 #include "brave/components/private_channel/browser/static_values.h"
 #include "brave/components/private_channel/browser/request_utils.h"
 #include "brave/components/private_channel/client_private_channel.h"
+#include "brave/components/private_channel/utils.h"
 
 #include "base/logging.h"
 #include "extensions/common/url_pattern.h"
@@ -23,14 +24,8 @@ using namespace brave_private_channel_request_utils;  // NOLINT
 
 namespace brave_private_channel {
 
-  PrivateChannel::PrivateChannel(bool init, std::string referral_code) {
+  PrivateChannel::PrivateChannel(std::string referral_code) {
     referral_code_ = referral_code;
-    if (!init) {
-      server_pubkey_ = PRIVATE_CHANNEL_SERVER_PK;
-      return;
-    }
-
-    this->FetchMetadataPrivateChannelServer();
   }
 
   PrivateChannel::~PrivateChannel() {
@@ -39,10 +34,12 @@ namespace brave_private_channel {
   void PrivateChannel::PerformReferralAttestation() {
     LOG(INFO) << "PrivateChannel::PerformReferralAttestation";
 
-    this->FirstRoundProtocol(server_pubkey_);
+    this->FetchMetadataPrivateChannelServer();
   }
 
   void PrivateChannel::FetchMetadataPrivateChannelServer() {
+    LOG(INFO) << "PrivateChannel::FetchMetadataPrivateChannelServer";
+
     auto resource_request = std::make_unique<network::ResourceRequest>();
     resource_request->method = "GET";
     resource_request->url =
@@ -82,8 +79,7 @@ namespace brave_private_channel {
     http_loader_->SetAllowHttpErrorResults(true);
 
     http_loader_->DownloadToString(
-      loader_factory,
-      base::BindOnce(&PrivateChannel::OnPrivateChannelMetaLoadComplete,
+      loader_factory, base::BindOnce(&PrivateChannel::OnPrivateChannelMetaLoadComplete,
                       base::Unretained(this)),
                       kMaxPrivateChannelServerResponseSizeBytes);
   }
@@ -110,12 +106,12 @@ namespace brave_private_channel {
                      << ", url: " << http_loader_->GetFinalURL().spec();
           return;
         }
-
-        // TODO(@gpestana): parse response_body to `const uint8_t`
-        server_pubkey_ = PRIVATE_CHANNEL_SERVER_PK;
+        // We expect the public key response from the server to be correct,
+        // if that's not the case, the protocol will eventually fail gracefully
+        this->FirstRoundProtocol(safe_response_body.c_str());
   }
 
-  void PrivateChannel::FirstRoundProtocol(const uint8_t* server_pk) {
+  void PrivateChannel::FirstRoundProtocol(const char* server_pk) {
     LOG(INFO) << "PrivateChannel::FirstRoundProtocol";
 
     // TODO(gpestana): refactor and extract signals
@@ -135,8 +131,7 @@ namespace brave_private_channel {
 
     int input_size = sizeof(input)/sizeof(input[0]);
 
-    auto request_artefacts =
-      ChallengeFirstRound(input, input_size, server_pubkey_);
+    auto request_artefacts = ChallengeFirstRound(input, input_size, server_pk);
 
     const std::string payload = base::StringPrintf(
       "pk=%s&th_key=%s&enc_signals=%s&client_id=%s",

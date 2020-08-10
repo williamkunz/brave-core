@@ -30,14 +30,14 @@ typedef struct {
 
 C_ResultSecondRound client_second_round(const uint8_t *input,
                                         int input_size,
-                                        const uint8_t *client_sk_encoded);
+                                        const char *client_sk_encoded);
 
 /**
  * Starts client attestation challenge;
  */
 C_ResultChallenge client_start_challenge(const char *const *input,
                                          int input_size,
-                                         const uint8_t *server_pk_encoded);
+                                         const char *server_pk_encoded);
 
 void deallocate_first_round_result(C_ResultChallenge result);
 

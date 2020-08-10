@@ -23,9 +23,4 @@ const int kMaxPrivateChannelServerResponseSizeBytes = 1024 * 1024;
 #define PRIVATE_CHANNEL_FIRST_ROUND_ENDPOINT "/private-channel/start"
 #define PRIVATE_CHANNEL_SECOND_ROUND_ENDPOINT "/private-channel/result"
 
-static const uint8_t PRIVATE_CHANNEL_SERVER_PK[] = {
-  216, 8, 125, 12, 194, 66, 33, 188, 65, 82, 9, 38, 140, 163,
-  231, 156, 2, 3, 82, 85, 115, 97, 14, 54, 85, 62, 0, 11, 213,
-  142, 152, 1};
-
 #endif  // BRAVE_COMPONENTS_PRIVATE_CHANNEL_BROWSER_STATIC_VALUES_H_

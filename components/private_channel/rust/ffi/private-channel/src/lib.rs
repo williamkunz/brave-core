@@ -1,11 +1,13 @@
 use curve25519_dalek::scalar::Scalar;
 use elgamal_ristretto::ciphertext::Ciphertext;
 use elgamal_ristretto::private::SecretKey;
+use elgamal_ristretto::public::PublicKey;
 use repsys_crypto::{
     combine_pks, encrypt_input, generate_keys, partial_decryption_and_proof, randomize_and_prove,
 };
 
 use sha2::Sha512;
+use std::str::FromStr;
 
 pub struct FirstRoundOutput {
     pub pkey: Vec<u8>,
@@ -22,9 +24,12 @@ pub struct SecondRoundOutput {
 
 pub fn start_challenge(
     input: Vec<String>,
-    server_pk_encoded: [u8; 32],
+    server_pk_encoded: String,
 ) -> Result<FirstRoundOutput, ()> {
-    let pk_server = bincode::deserialize(&server_pk_encoded).map_err(|_| ())?;
+    let pk_server = match parse_pk(server_pk_encoded) {
+        Ok(pk) => pk,
+        Err(_) => return Err(()),
+    };
 
     let vector_hashes: Vec<Scalar> = input
         .iter()
@@ -50,8 +55,12 @@ pub fn start_challenge(
     })
 }
 
-pub fn second_round(input: &[u8], encoded_sk: &[u8]) -> Result<SecondRoundOutput, ()> {
-    let sk: SecretKey = bincode::deserialize(encoded_sk).map_err(|_| ())?;
+pub fn second_round(input: &[u8], encoded_sk: String) -> Result<SecondRoundOutput, ()> {
+    let sk = match parse_sk(encoded_sk) {
+        Ok(sk) => sk,
+        Err(_) => return Err(()),
+    };
+
     let enc_checks: Vec<Ciphertext> = bincode::deserialize(input).map_err(|_| ())?;
 
     let (rand_vec, _) = randomize_and_prove(&enc_checks);
@@ -67,4 +76,32 @@ pub fn second_round(input: &[u8], encoded_sk: &[u8]) -> Result<SecondRoundOutput
         proofs: encoded_proofs,
         rand_vec: encoded_rand_vec,
     })
+}
+
+pub fn parse_pk(s: String) -> Result<PublicKey, ()> {
+    let enc_pk = s[1..s.len() - 1]
+        .split(", ")
+        .map(|x| u8::from_str(x))
+        .filter_map(Result::ok)
+        .collect::<Vec<u8>>();
+
+    let result = match bincode::deserialize(&enc_pk) {
+        Ok(pk) => Ok(pk),
+        Err(_) => Err(()),
+    };
+    result
+}
+
+pub fn parse_sk(s: String) -> Result<SecretKey, ()> {
+    let enc_sk = s[1..s.len() - 1]
+        .split(", ")
+        .map(|x| u8::from_str(x))
+        .filter_map(Result::ok)
+        .collect::<Vec<u8>>();
+
+    let result = match bincode::deserialize(&enc_sk) {
+        Ok(sk) => Ok(sk),
+        Err(_) => Err(()),
+    };
+    result
 }

@@ -36,10 +36,10 @@ namespace private_channel {
 	} ResultSecondRound;
 
   ResultChallenge start_challenge(
-    const char* const* input_ptr, int size, const uint8_t* server_pk);
+    const char* const* input_ptr, int size, const char* server_pk);
 	
   ResultSecondRound second_round(
-    const uint8_t* enc_input_ptr, int size,  const uint8_t*  sk);
+    const uint8_t* enc_input_ptr, int size,  const char* sk);
 
   void free_first_round_result(ResultChallenge result);
 

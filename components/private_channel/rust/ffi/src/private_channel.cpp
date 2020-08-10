@@ -13,7 +13,7 @@ extern "C" {
 namespace private_channel {
 
   ResultChallenge start_challenge(
-    const char* const* input_ptr, int size, const uint8_t* server_pk) {
+    const char* const* input_ptr, int size, const char* server_pk) {
       C_ResultChallenge c_result = client_start_challenge(input_ptr, size, server_pk);
 
 			ResultChallenge result;
@@ -29,7 +29,7 @@ namespace private_channel {
   }
 
   ResultSecondRound second_round(
-    const uint8_t* enc_input_ptr, int input_size, const uint8_t*  sk) {
+    const uint8_t* enc_input_ptr, int input_size, const char*  sk) {
       C_ResultSecondRound c_result = client_second_round(enc_input_ptr, input_size, sk);
 
 			ResultSecondRound result;

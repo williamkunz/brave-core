@@ -1,4 +1,3 @@
-use std::convert::TryInto;
 use std::ffi::CStr;
 use std::os::raw::{c_char, c_int};
 use std::slice;
@@ -68,7 +67,7 @@ impl Default for ResultSecondRound {
 pub unsafe extern "C" fn client_start_challenge(
     input: *const *const c_char,
     input_size: c_int,
-    server_pk_encoded: *const u8,
+    server_pk_encoded: *const c_char,
 ) -> ResultChallenge {
     assert!(!input.is_null(), "Null pointers passed as input");
     assert!(
@@ -76,11 +75,9 @@ pub unsafe extern "C" fn client_start_challenge(
         "Null pointers passed as input"
     );
 
-    let server_pk = match slice::from_raw_parts(server_pk_encoded, KEY_SIZE).try_into() {
-        Ok(pk) => pk,
-        Err(_) => {
-            return ResultChallenge::default();
-        }
+    let server_pk = match CStr::from_ptr(server_pk_encoded).to_str() {
+        Ok(pk) => pk.to_string(),
+        Err(_) => return ResultChallenge::default(),
     };
 
     let mut v_out = Vec::new();
@@ -127,7 +124,7 @@ pub unsafe extern "C" fn client_start_challenge(
 pub unsafe extern "C" fn client_second_round(
     input: *const u8,
     input_size: c_int,
-    client_sk_encoded: *const u8,
+    client_sk_encoded: *const c_char,
 ) -> ResultSecondRound {
     assert!(!input.is_null(), "Null pointers passed as input");
     assert!(
@@ -135,7 +132,10 @@ pub unsafe extern "C" fn client_second_round(
         "Null pointers passed as input"
     );
 
-    let skey_buff = slice::from_raw_parts(client_sk_encoded, KEY_SIZE as usize);
+    let client_sk = match CStr::from_ptr(client_sk_encoded).to_str() {
+        Ok(sk) => sk.to_string(),
+        Err(_) => return ResultSecondRound::default(),
+    };
 
     let v_enc = slice::from_raw_parts(input, input_size as usize);
 
@@ -143,7 +143,7 @@ pub unsafe extern "C" fn client_second_round(
         partial_dec,
         proofs,
         rand_vec,
-    } = match brave_private_channel::second_round(v_enc, skey_buff) {
+    } = match brave_private_channel::second_round(v_enc, client_sk) {
         Ok(result) => result,
         Err(_) => return ResultSecondRound::default(),
     };

@@ -5,6 +5,8 @@
 
 #include <iostream>
 
+#include "base/logging.h"
+
 #include "brave/components/private_channel/utils.h"
 #include "brave/components/private_channel/client_private_channel.h"
 #include "brave/components/private_channel/rust/ffi/src/private_channel.hpp"
@@ -20,7 +22,7 @@
   SecondRoundArtefacts::~SecondRoundArtefacts() {}
 
   ChallengeArtefacts ChallengeFirstRound(
-    const char** input, int input_size, const uint8_t* server_pk) {
+    const char** input, int input_size, const char* server_pk) {
 
   struct ChallengeArtefacts artefacts;
   auto results = private_channel::start_challenge(input, input_size, server_pk);
@@ -45,13 +47,9 @@
   uint8_t enc_buffer[kInputSize];
   parse_str_response(enc_input, enc_buffer);
 
-  uint kClientSkSize = get_size_response(client_sk);
-  uint8_t sk_buffer[kClientSkSize];
-  parse_str_response(client_sk, sk_buffer);
-
   struct SecondRoundArtefacts artefacts;
   auto results =
-    private_channel::second_round(enc_buffer, kInputSize, sk_buffer);
+    private_channel::second_round(enc_buffer, size, client_sk);
 
   artefacts.partial_decryption = convert_to_str(
     results.encoded_partial_dec_ptr, results.encoded_partial_dec_size);

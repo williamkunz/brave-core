@@ -129,9 +129,8 @@ void BraveReferralsService::Start() {
   // Retrieve first run time.
   GetFirstRunTime();
 
-  // TODO(@gpestana): check better trigger
-  bool fetch_metadata_remote = false;
-  PrivateChannel* pc = new PrivateChannel(fetch_metadata_remote, promo_code_);
+  // TODO(@gpestana): check better trigger for private channels protocol
+  PrivateChannel* pc = new PrivateChannel(promo_code_);
   pc->PerformReferralAttestation();
 
   // Periodically perform finalization checks.

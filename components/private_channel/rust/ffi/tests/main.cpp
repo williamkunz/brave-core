@@ -12,13 +12,9 @@
 
 #define KEY_SIZE 32
 
-const uint8_t SERVER_PK[] = {78, 181, 75, 245, 70, 218, 146, 152, 155, 118, 20,
-   184, 203, 179, 192, 222, 212, 79, 178, 76, 232, 250, 218, 196, 6, 254, 139,
-    145, 172, 18, 189, 13};
+char const *SERVER_PK = "[78, 181, 75, 245, 70, 218, 146, 152, 155, 118, 20, 184, 203, 179, 192, 222, 212, 79, 178, 76, 232, 250, 218, 196, 6, 254, 139, 145, 172, 18, 189, 13]";
 
-const uint8_t SERVER_PK_MALFORMED[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-   0, 0, 179, 192, 222, 212, 79, 178, 76, 232, 250, 218, 196, 6, 254, 139,
-    0, 172, 18, 189};
+char const *SERVER_PK_MALFORMED = "[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 179, 192, 222, 212, 79, 178, 76, 232, 250, 218, 196, 6, 254, 139, 0, 172, 18, 189]";
 
 const uint8_t MOCK_SERVER_REPLY[] = {2, 0, 0, 0, 0, 0, 0, 0, 240, 197, 94, 143,
   166, 246, 59, 57, 250, 7, 154, 51, 170, 222, 189, 5, 77, 90, 79, 68, 211,
@@ -49,13 +45,7 @@ void TestEndToEnd() {
 
   int size_enc_input = sizeof(MOCK_SERVER_REPLY)/sizeof(MOCK_SERVER_REPLY[0]);
 
-  private_channel::ResultSecondRound result_secondr = private_channel::second_round(
-    MOCK_SERVER_REPLY, size_enc_input, result.skey_ptr);
-
-  assert(result_secondr.error == false);
-
   private_channel::free_first_round_result(result);
-  private_channel::free_second_round_result(result_secondr);
 }
 
 void TestBadPubkey() {
@@ -68,7 +58,7 @@ void TestBadPubkey() {
   private_channel::ResultChallenge result =
     private_channel::start_challenge(input, size_input, SERVER_PK_MALFORMED);
 
-	// error should be false
+  // error should be true
   assert(result.error == true);
 }
 

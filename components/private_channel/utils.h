@@ -14,4 +14,6 @@ void parse_str_response(const char* ptr, uint8_t* dst);
 
 int get_size_response(const char* ptr);
 
+const uint8_t* parse_str_response_u8pointer(std::string str);
+
 #endif  // BRAVE_COMPONENTS_PRIVATE_CHANNEL_UTILS_H_

@@ -21,7 +21,7 @@ namespace brave_private_channel {
 
 class PrivateChannel {
  public:
-    explicit PrivateChannel(bool init, std::string referral_code);
+    explicit PrivateChannel(std::string referral_code);
     ~PrivateChannel();
 
     void PerformReferralAttestation();
@@ -32,7 +32,7 @@ class PrivateChannel {
   void OnPrivateChannelMetaLoadComplete(
       std::unique_ptr<std::string> response_body);
 
-  void FirstRoundProtocol(const uint8_t* server_pubkey);
+  void FirstRoundProtocol(const char* server_pubkey);
 
   void OnPrivateChannelFirstRoundLoadComplete(
       std::string client_sk,
@@ -49,9 +49,7 @@ class PrivateChannel {
   void OnPrivateChannelSecondRoundLoadComplete(
       std::unique_ptr<std::string> response_body);
 
-
   std::unique_ptr<network::SimpleURLLoader> http_loader_;
-  const uint8_t* server_pubkey_;
   std::string referral_code_;
 };
 

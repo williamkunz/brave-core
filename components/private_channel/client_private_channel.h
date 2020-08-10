@@ -33,7 +33,7 @@
   };
 
 ChallengeArtefacts ChallengeFirstRound(
-  const char** input, int input_size, const uint8_t* server_pk_encoded);
+  const char** input, int input_size, const char* server_pk_encoded);
 
 SecondRoundArtefacts SecondRound(
   const char* enc_input, int size, const char* client_sk);
