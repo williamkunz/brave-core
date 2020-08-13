@@ -135,8 +135,8 @@ namespace brave_private_channel {
     auto request_artefacts = ChallengeFirstRound(input, input_size, server_pk);
 
     const std::string payload = base::StringPrintf(
-      "pk=%s&th_key=%s&enc_signals=%s&client_id=%s",
-      request_artefacts.client_pk.c_str(),
+      "pk_vector=%s&th_key_vector=%s&enc_signals=%s&client_id=%s",
+      request_artefacts.client_pks.c_str(),
       request_artefacts.shared_pubkey.c_str(),
       request_artefacts.encrypted_hashes.c_str(),
       referral_code_.c_str());

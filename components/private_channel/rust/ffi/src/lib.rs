@@ -12,12 +12,14 @@ macro_rules! assert_not_null {
 
 #[repr(C)]
 pub struct ResultChallenge {
-    pub pkey_ptr: *const u8,
+    pub pkeys_ptr: *const u8,
     pub skey_ptr: *const u8,
-    pub key_size: usize,
+    pub pkeys_byte_size: usize,
     pub shared_pubkey_ptr: *const u8,
+    pub shared_pkeys_byte_size: usize,
     pub encrypted_hashes_ptr: *const u8,
     pub encrypted_hashes_size: usize,
+    pub key_size: usize,
     pub error: bool,
 }
 
@@ -26,12 +28,14 @@ impl Default for ResultChallenge {
         let mock_vec = vec![];
         ResultChallenge {
             error: true,
-            pkey_ptr: mock_vec.as_ptr(),
+            pkeys_ptr: mock_vec.as_ptr(),
             skey_ptr: mock_vec.as_ptr(),
-            key_size: 0,
+            pkeys_byte_size: 0,
+            shared_pkeys_byte_size: 0,
             shared_pubkey_ptr: mock_vec.as_ptr(),
             encrypted_hashes_size: 0,
             encrypted_hashes_ptr: mock_vec.as_ptr(),
+            key_size: 0,
         }
     }
 }
@@ -88,7 +92,7 @@ pub unsafe extern "C" fn client_start_challenge(
     }
 
     let brave_private_channel::FirstRoundOutput {
-        pkey,
+        pkeys,
         skey,
         shared_pk,
         enc_hashes,
@@ -97,8 +101,8 @@ pub unsafe extern "C" fn client_start_challenge(
         Err(_) => return ResultChallenge::default(),
     };
 
-    let pkey_buff = pkey.into_boxed_slice();
-    let pkey_buff = std::mem::ManuallyDrop::new(pkey_buff);
+    let pkeys_buff = pkeys.into_boxed_slice();
+    let pkeys_buff = std::mem::ManuallyDrop::new(pkeys_buff);
 
     let skey_buff = skey.into_boxed_slice();
     let skey_buff = std::mem::ManuallyDrop::new(skey_buff);
@@ -110,12 +114,14 @@ pub unsafe extern "C" fn client_start_challenge(
     let enc_hashes_buff = std::mem::ManuallyDrop::new(enc_hashes_buff);
 
     ResultChallenge {
-        pkey_ptr: pkey_buff.as_ptr(),
+        pkeys_ptr: pkeys_buff.as_ptr(),
         skey_ptr: skey_buff.as_ptr(),
-        key_size: KEY_SIZE,
+        pkeys_byte_size: pkeys_buff.len(),
         shared_pubkey_ptr: shared_pk_buff.as_ptr(),
-        encrypted_hashes_size: enc_hashes_buff.len(),
+        shared_pkeys_byte_size: shared_pk_buff.len(),
         encrypted_hashes_ptr: enc_hashes_buff.as_ptr(),
+        encrypted_hashes_size: enc_hashes_buff.len(),
+        key_size: KEY_SIZE,
         error: false,
     }
 }
@@ -180,9 +186,9 @@ pub unsafe extern "C" fn client_second_round(
 // the Rust compiler will deallocate the memory contents
 #[no_mangle]
 pub unsafe extern "C" fn deallocate_first_round_result(result: ResultChallenge) {
-    assert_not_null!(result.pkey_ptr);
+    assert_not_null!(result.pkeys_ptr);
     let _key = Box::from_raw(std::slice::from_raw_parts_mut(
-        result.pkey_ptr as *mut u8,
+        result.pkeys_ptr as *mut u8,
         KEY_SIZE,
     ))
     .into_vec();

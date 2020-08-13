@@ -24,17 +24,19 @@ typedef struct {
 } C_ResultSecondRound;
 
 typedef struct {
-  const uint8_t *pkey_ptr;
+  const uint8_t *pkeys_ptr;
   const uint8_t *skey_ptr;
-  uintptr_t key_size;
+  uintptr_t pkeys_byte_size;
   const uint8_t *shared_pubkey_ptr;
+  uintptr_t shared_pkeys_byte_size;
   const uint8_t *encrypted_hashes_ptr;
   uintptr_t encrypted_hashes_size;
+  uintptr_t key_size;
   bool error;
 } C_ResultChallenge;
 
 C_ResultSecondRound client_second_round(const char *input,
-                                        int input_size,
+                                        int _input_size,
                                         const char *client_sk_encoded);
 
 /**

@@ -27,10 +27,11 @@
   struct ChallengeArtefacts artefacts;
   auto results = private_channel::start_challenge(input, input_size, server_pk);
 
-  uint key_size = results.key_size;
-  artefacts.client_pk = convert_to_str(results.pkey_ptr, key_size);
-  artefacts.client_sk = convert_to_str(results.skey_ptr, key_size);
-  artefacts.shared_pubkey = convert_to_str(results.shared_pubkey_ptr, key_size);
+  artefacts.client_pks = convert_to_str(
+    results.pkeys_ptr, results.pkeys_byte_size);
+  artefacts.client_sk = convert_to_str(results.skey_ptr, results.key_size);
+  artefacts.shared_pubkey = convert_to_str(
+    results.shared_pubkey_ptr, results.shared_pkeys_byte_size);
   artefacts.encrypted_hashes = convert_to_str(
     results.encrypted_hashes_ptr, results.encrypted_hashes_size);
   artefacts.encrypted_hashes_size = results.encrypted_hashes_size;

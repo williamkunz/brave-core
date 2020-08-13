@@ -15,31 +15,33 @@ extern "C" {
 
 namespace private_channel {
 
-	typedef struct {
-		const uint8_t *pkey_ptr;
-		const uint8_t *skey_ptr;
-		uintptr_t key_size;
-		const uint8_t *shared_pubkey_ptr;
-		const uint8_t *encrypted_hashes_ptr;
-		uintptr_t encrypted_hashes_size;
-		bool error;
-	} ResultChallenge;
+  typedef struct {
+    const uint8_t *pkeys_ptr;
+    const uint8_t *skey_ptr;
+    uintptr_t pkeys_byte_size;
+    const uint8_t *shared_pubkey_ptr;
+    uintptr_t shared_pkeys_byte_size;
+    const uint8_t *encrypted_hashes_ptr;
+    uintptr_t encrypted_hashes_size;
+    uintptr_t key_size;
+    bool error;
+  } ResultChallenge;
 
-	typedef struct {
-		const uint8_t *encoded_partial_dec_ptr;
-		uintptr_t encoded_partial_dec_size;
-		const uint8_t *encoded_proofs_ptr;
-		uintptr_t encoded_proofs_size;
-		const uint8_t *random_vec_ptr;
-		uintptr_t random_vec_size;
-		bool error;
-	} ResultSecondRound;
+  typedef struct {
+    const uint8_t *encoded_partial_dec_ptr;
+    uintptr_t encoded_partial_dec_size;
+    const uint8_t *encoded_proofs_ptr;
+    uintptr_t encoded_proofs_size;
+    const uint8_t *random_vec_ptr;
+    uintptr_t random_vec_size;
+    bool error;
+  } ResultSecondRound;
 
   ResultChallenge start_challenge(
     const char* const* input_ptr, int size, const char* server_pk);
 	
-  ResultSecondRound second_round(
-    const char* enc_input_ptr, int size,  const char* sk);
+ ResultSecondRound second_round(
+   const char* enc_input_ptr, int size,  const char* sk);
 
   void free_first_round_result(ResultChallenge result);
 

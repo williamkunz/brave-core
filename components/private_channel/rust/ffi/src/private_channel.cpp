@@ -18,10 +18,12 @@ namespace private_channel {
         client_start_challenge(input_ptr, size, server_pk);
 
       ResultChallenge result;
-      result.pkey_ptr = c_result.pkey_ptr;
+      result.pkeys_ptr = c_result.pkeys_ptr;
       result.skey_ptr = c_result.skey_ptr;
+      result.pkeys_byte_size = c_result.pkeys_byte_size;
       result.key_size = c_result.key_size;
       result.shared_pubkey_ptr = c_result.shared_pubkey_ptr;
+      result.shared_pkeys_byte_size = c_result.shared_pkeys_byte_size;
       result.encrypted_hashes_ptr = c_result.encrypted_hashes_ptr;
       result.encrypted_hashes_size = c_result.encrypted_hashes_size;
       result.error = c_result.error;
@@ -48,7 +50,7 @@ namespace private_channel {
 
   void free_first_round_result(ResultChallenge result) {
     C_ResultChallenge c_result;
-    c_result.pkey_ptr = result.pkey_ptr;
+    c_result.pkeys_ptr = result.pkeys_ptr;
     c_result.skey_ptr = result.skey_ptr;
     c_result.key_size = result.key_size;
     c_result.shared_pubkey_ptr = result.shared_pubkey_ptr;

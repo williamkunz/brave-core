@@ -11,7 +11,7 @@
 
   struct ChallengeArtefacts {
     std::string client_sk;
-    std::string client_pk;
+    std::string client_pks;
     std::string shared_pubkey;
     std::string encrypted_hashes;
     int encrypted_hashes_size;
