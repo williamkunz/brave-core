@@ -93,8 +93,8 @@ pub unsafe extern "C" fn client_start_challenge(
 
     let brave_private_channel::FirstRoundOutput {
         pkeys,
-        skey,
-        shared_pk,
+        skeys,
+        shared_pks,
         enc_hashes,
     } = match brave_private_channel::start_challenge(v_out, server_pk) {
         Ok(result) => result,
@@ -104,11 +104,11 @@ pub unsafe extern "C" fn client_start_challenge(
     let pkeys_buff = pkeys.into_boxed_slice();
     let pkeys_buff = std::mem::ManuallyDrop::new(pkeys_buff);
 
-    let skey_buff = skey.into_boxed_slice();
+    let skey_buff = skeys.into_boxed_slice();
     let skey_buff = std::mem::ManuallyDrop::new(skey_buff);
 
-    let shared_pk_buff = shared_pk.into_boxed_slice();
-    let shared_pk_buff = std::mem::ManuallyDrop::new(shared_pk_buff);
+    let shared_pks_buff = shared_pks.into_boxed_slice();
+    let shared_pks_buff = std::mem::ManuallyDrop::new(shared_pks_buff);
 
     let enc_hashes_buff = enc_hashes.into_boxed_slice();
     let enc_hashes_buff = std::mem::ManuallyDrop::new(enc_hashes_buff);
@@ -117,8 +117,8 @@ pub unsafe extern "C" fn client_start_challenge(
         pkeys_ptr: pkeys_buff.as_ptr(),
         skey_ptr: skey_buff.as_ptr(),
         pkeys_byte_size: pkeys_buff.len(),
-        shared_pubkey_ptr: shared_pk_buff.as_ptr(),
-        shared_pkeys_byte_size: shared_pk_buff.len(),
+        shared_pubkey_ptr: shared_pks_buff.as_ptr(),
+        shared_pkeys_byte_size: shared_pks_buff.len(),
         encrypted_hashes_ptr: enc_hashes_buff.as_ptr(),
         encrypted_hashes_size: enc_hashes_buff.len(),
         key_size: KEY_SIZE,
