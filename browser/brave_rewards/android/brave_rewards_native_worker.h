@@ -15,15 +15,15 @@
 #include "base/android/jni_weak_ref.h"
 #include "base/memory/weak_ptr.h"
 #include "bat/ledger/mojom_structs.h"
+#include "brave/components/brave_rewards/browser/auto_contribution_props.h"
 #include "brave/components/brave_rewards/browser/balance.h"
 #include "brave/components/brave_rewards/browser/balance_report.h"
 #include "brave/components/brave_rewards/browser/external_wallet.h"
-#include "brave/components/brave_rewards/browser/rewards_service_observer.h"
+#include "brave/components/brave_rewards/browser/publisher_info.h"
 #include "brave/components/brave_rewards/browser/rewards_notification_service_observer.h"
-#include "brave/components/brave_rewards/browser/rewards_service_private_observer.h"
 #include "brave/components/brave_rewards/browser/rewards_parameters.h"
-#include "brave/components/brave_rewards/browser/auto_contribution_props.h"
-#include "brave/components/brave_rewards/browser/content_site.h"
+#include "brave/components/brave_rewards/browser/rewards_service_observer.h"
+#include "brave/components/brave_rewards/browser/rewards_service_private_observer.h"
 
 namespace brave_rewards {
 class RewardsService;
@@ -234,7 +234,7 @@ class BraveRewardsNativeWorker : public brave_rewards::RewardsServiceObserver,
         unsigned int result, brave_rewards::Promotion grant) override;
 
     void OnGetRecurringTips(
-        std::unique_ptr<brave_rewards::ContentSiteList> list);
+        std::unique_ptr<brave_rewards::PublisherInfoList> list);
 
     void OnRewardsMainEnabled(brave_rewards::RewardsService* rewards_service,
         bool rewards_main_enabled) override;
@@ -275,7 +275,7 @@ class BraveRewardsNativeWorker : public brave_rewards::RewardsServiceObserver,
     brave_rewards::Balance balance_;
     brave_rewards::AutoContributeProps auto_contrib_properties_;
     PublishersInfoMap map_publishers_info_;  // <tabId, PublisherInfoPtr>
-    std::map<std::string, brave_rewards::ContentSite>
+    std::map<std::string, brave_rewards::PublisherInfo>
         map_recurrent_publishers_;           // <publisher, reconcile_stampt>
     std::map<std::string, std::string> addresses_;
     std::vector<brave_rewards::Promotion> promotions_;

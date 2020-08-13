@@ -11,7 +11,7 @@
 #include <vector>
 
 #include "base/macros.h"
-#include "brave/components/brave_rewards/browser/content_site.h"
+#include "brave/components/brave_rewards/browser/publisher_info.h"
 #include "brave/components/brave_rewards/browser/rewards_service_observer.h"
 #include "brave/components/brave_rewards/browser/rewards_service_private_observer.h"
 
@@ -32,7 +32,7 @@ class ExtensionRewardsServiceObserver : public RewardsServiceObserver,
                            int32_t result) override;
   void OnPublisherListNormalized(
       RewardsService* rewards_service,
-      const brave_rewards::ContentSiteList& list) override;
+      const brave_rewards::PublisherInfoList& list) override;
   void OnExcludedSitesChanged(RewardsService* rewards_service,
                               std::string publisher_key,
                               bool excluded) override;

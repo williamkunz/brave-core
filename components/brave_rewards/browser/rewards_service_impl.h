@@ -14,27 +14,27 @@
 #include <vector>
 
 #include "base/containers/flat_set.h"
-#include "bat/ledger/ledger.h"
-#include "base/files/file_path.h"
 #include "base/files/file.h"
+#include "base/files/file_path.h"
+#include "base/memory/weak_ptr.h"
 #include "base/observer_list.h"
 #include "base/one_shot_event.h"
-#include "base/memory/weak_ptr.h"
 #include "base/values.h"
+#include "bat/ledger/ledger.h"
 #include "bat/ledger/ledger_client.h"
-#include "brave/components/services/bat_ledger/public/interfaces/bat_ledger.mojom.h"
+#include "brave/components/brave_rewards/browser/balance_report.h"
+#include "brave/components/brave_rewards/browser/publisher_banner.h"
+#include "brave/components/brave_rewards/browser/publisher_info.h"
 #include "brave/components/brave_rewards/browser/rewards_service.h"
+#include "brave/components/brave_rewards/browser/rewards_service_private_observer.h"
 #include "brave/components/greaselion/browser/buildflags/buildflags.h"
+#include "brave/components/services/bat_ledger/public/interfaces/bat_ledger.mojom.h"
 #include "chrome/browser/bitmap_fetcher/bitmap_fetcher_service.h"
 #include "content/public/browser/browser_thread.h"
 #include "mojo/public/cpp/bindings/associated_receiver.h"
 #include "mojo/public/cpp/bindings/associated_remote.h"
 #include "mojo/public/cpp/bindings/remote.h"
-#include "brave/components/brave_rewards/browser/balance_report.h"
-#include "brave/components/brave_rewards/browser/content_site.h"
 #include "ui/gfx/image/image.h"
-#include "brave/components/brave_rewards/browser/publisher_banner.h"
-#include "brave/components/brave_rewards/browser/rewards_service_private_observer.h"
 
 #if defined(OS_ANDROID)
 #include "brave/components/safetynet/safetynet_check.h"
@@ -132,19 +132,19 @@ class RewardsServiceImpl : public RewardsService,
   void GetWalletPassphrase(
       const GetWalletPassphraseCallback& callback) override;
   void RecoverWallet(const std::string& passPhrase) override;
-  void GetContentSiteList(
+  void GetPublisherInfoList(
       uint32_t start,
       uint32_t limit,
       uint64_t min_visit_time,
       uint64_t reconcile_stamp,
       bool allow_non_verified,
       uint32_t min_visits,
-      const GetContentSiteListCallback& callback) override;
+      const GetPublisherInfoListCallback& callback) override;
 
-  void GetExcludedList(const GetContentSiteListCallback& callback) override;
+  void GetExcludedList(const GetPublisherInfoListCallback& callback) override;
 
-  void OnGetContentSiteList(
-      const GetContentSiteListCallback& callback,
+  void OnGetPublisherInfoList(
+      const GetPublisherInfoListCallback& callback,
       ledger::PublisherInfoList list);
   void OnLoad(SessionID tab_id, const GURL& url) override;
   void OnUnload(SessionID tab_id) override;
@@ -244,6 +244,23 @@ class RewardsServiceImpl : public RewardsService,
       const std::map<std::string, std::string>& args,
       SaveMediaInfoCallback callback) override;
 
+  void UpdateMediaDuration(
+      const std::string& publisher_key,
+      uint64_t duration) override;
+
+  void GetPublisherInfo(
+      const std::string& publisher_key,
+      GetPublisherInfoCallback callback) override;
+
+  void GetPublisherPanelInfo(
+      const std::string& publisher_key,
+      GetPublisherInfoCallback callback) override;
+
+  void SavePublisherInfo(
+      const uint64_t window_id,
+      std::unique_ptr<brave_rewards::PublisherInfo> publisher_info,
+      SavePublisherInfoCallback callback) override;
+
   void SetInlineTippingPlatformEnabled(
       const std::string& key,
       bool enabled) override;
@@ -268,7 +285,7 @@ class RewardsServiceImpl : public RewardsService,
       const std::string& publisher_key,
       const double amount,
       const bool recurring,
-      std::unique_ptr<brave_rewards::ContentSite> site) override;
+      std::unique_ptr<brave_rewards::PublisherInfo> publisher_info) override;
 
   void OnTip(
       const std::string& publisher_key,
@@ -519,6 +536,17 @@ class RewardsServiceImpl : public RewardsService,
   void OnSetOnDemandFaviconComplete(const std::string& favicon_url,
                                     ledger::FetchIconCallback callback,
                                     bool success);
+  void OnPublisherInfo(
+      GetPublisherInfoCallback callback,
+      const ledger::Result result,
+      ledger::PublisherInfoPtr info);
+  void OnPublisherPanelInfo(
+      GetPublisherInfoCallback callback,
+      const ledger::Result result,
+      ledger::PublisherInfoPtr info);
+  void OnSavePublisherInfo(
+      SavePublisherInfoCallback callback,
+      const ledger::Result result);
 
   bool MaybeTailDiagnosticLog(
       const int num_lines);

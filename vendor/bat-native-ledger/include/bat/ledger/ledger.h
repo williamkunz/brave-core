@@ -51,6 +51,8 @@ using GetMonthlyReportCallback =
 using GetAllMonthlyReportIdsCallback =
     std::function<void(const std::vector<std::string>&)>;
 using GetEventLogsCallback = std::function<void(EventLogs)>;
+using GetPublisherInfoCallback =
+    std::function<void(const ledger::Result, ledger::PublisherInfoPtr)>;
 
 class LEDGER_EXPORT Ledger {
  public:
@@ -251,6 +253,23 @@ class LEDGER_EXPORT Ledger {
       const std::map<std::string, std::string>& data,
       PublisherInfoCallback callback) = 0;
 
+  virtual void UpdateMediaDuration(
+      const std::string& publisher_key,
+      uint64_t duration) = 0;
+
+  virtual void GetPublisherInfo(
+      const std::string& publisher_key,
+      GetPublisherInfoCallback callback) = 0;
+
+  virtual void GetPublisherPanelInfo(
+      const std::string& publisher_key,
+      GetPublisherInfoCallback callback) = 0;
+
+  virtual void SavePublisherInfo(
+      const uint64_t window_id,
+      PublisherInfoPtr publisher_info,
+      ResultCallback callback) = 0;
+
   virtual void SetInlineTippingPlatformEnabled(
       const InlineTipsPlatforms platform,
       bool enabled) = 0;
@@ -305,7 +324,7 @@ class LEDGER_EXPORT Ledger {
 
   virtual void GetAllContributions(ContributionInfoListCallback callback) = 0;
 
-  virtual void SavePublisherInfo(
+  virtual void SavePublisherInfoForTip(
       PublisherInfoPtr info,
       ResultCallback callback) = 0;
 

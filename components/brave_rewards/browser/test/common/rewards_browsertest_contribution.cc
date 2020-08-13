@@ -43,7 +43,7 @@ void RewardsBrowserTestContribution::TipViaCode(
   multiple_tip_reconcile_count_ = 0;
 
   bool should_contribute = number_of_contributions > 0;
-  auto site = std::make_unique<brave_rewards::ContentSite>();
+  auto site = std::make_unique<brave_rewards::PublisherInfo>();
   site->id = publisher_key;
   site->name = publisher_key;
   site->url = publisher_key;

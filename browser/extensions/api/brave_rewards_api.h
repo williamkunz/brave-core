@@ -12,12 +12,12 @@
 
 #include "base/memory/weak_ptr.h"
 #include "brave/components/brave_rewards/browser/balance.h"
-#include "brave/components/brave_rewards/browser/content_site.h"
-#include "brave/components/brave_rewards/browser/external_wallet.h"
-#include "brave/components/brave_rewards/browser/publisher_banner.h"
 #include "brave/components/brave_rewards/browser/balance_report.h"
-#include "brave/components/brave_rewards/browser/rewards_parameters.h"
+#include "brave/components/brave_rewards/browser/external_wallet.h"
 #include "brave/components/brave_rewards/browser/promotion.h"
+#include "brave/components/brave_rewards/browser/publisher_banner.h"
+#include "brave/components/brave_rewards/browser/publisher_info.h"
+#include "brave/components/brave_rewards/browser/rewards_parameters.h"
 #include "extensions/browser/extension_function.h"
 
 namespace extensions {
@@ -48,6 +48,59 @@ class BraveRewardsOpenBrowserActionUIFunction :
   ResponseAction Run() override;
 };
 
+class BraveRewardsUpdateMediaDurationFunction : public ExtensionFunction {
+ public:
+  DECLARE_EXTENSION_FUNCTION("braveRewards.updateMediaDuration", UNKNOWN)
+
+ protected:
+  ~BraveRewardsUpdateMediaDurationFunction() override;
+
+  ResponseAction Run() override;
+};
+
+class BraveRewardsGetPublisherInfoFunction : public ExtensionFunction {
+ public:
+  DECLARE_EXTENSION_FUNCTION("braveRewards.getPublisherInfo", UNKNOWN)
+
+ protected:
+  ~BraveRewardsGetPublisherInfoFunction() override;
+
+  ResponseAction Run() override;
+
+ private:
+  void OnGetPublisherInfo(
+      const int32_t result,
+      std::unique_ptr<brave_rewards::PublisherInfo> info);
+};
+
+class BraveRewardsGetPublisherPanelInfoFunction : public ExtensionFunction {
+ public:
+  DECLARE_EXTENSION_FUNCTION("braveRewards.getPublisherPanelInfo", UNKNOWN)
+
+ protected:
+  ~BraveRewardsGetPublisherPanelInfoFunction() override;
+
+  ResponseAction Run() override;
+
+ private:
+  void OnGetPublisherPanelInfo(
+      const int32_t result,
+      std::unique_ptr<brave_rewards::PublisherInfo> info);
+};
+
+class BraveRewardsSavePublisherInfoFunction : public ExtensionFunction {
+ public:
+  DECLARE_EXTENSION_FUNCTION("braveRewards.savePublisherInfo", UNKNOWN)
+
+ protected:
+  ~BraveRewardsSavePublisherInfoFunction() override;
+
+  ResponseAction Run() override;
+
+ private:
+  void OnSavePublisherInfo(const int32_t result);
+};
+
 class BraveRewardsTipSiteFunction : public ExtensionFunction {
  public:
   DECLARE_EXTENSION_FUNCTION("braveRewards.tipSite", UNKNOWN)
@@ -72,7 +125,7 @@ class BraveRewardsTipTwitterUserFunction
  private:
   base::WeakPtrFactory<BraveRewardsTipTwitterUserFunction> weak_factory_;
   void OnTwitterPublisherInfoSaved(
-      std::unique_ptr<brave_rewards::ContentSite> publisher_info);
+      std::unique_ptr<brave_rewards::PublisherInfo> publisher_info);
 };
 
 class BraveRewardsTipGitHubUserFunction : public ExtensionFunction {
@@ -87,7 +140,7 @@ class BraveRewardsTipGitHubUserFunction : public ExtensionFunction {
  private:
   base::WeakPtrFactory<BraveRewardsTipGitHubUserFunction> weak_factory_;
   void OnGitHubPublisherInfoSaved(
-      std::unique_ptr<brave_rewards::ContentSite> publisher_info);
+      std::unique_ptr<brave_rewards::PublisherInfo> publisher_info);
 };
 
 class BraveRewardsTipRedditUserFunction : public ExtensionFunction {
@@ -102,7 +155,7 @@ class BraveRewardsTipRedditUserFunction : public ExtensionFunction {
  private:
   base::WeakPtrFactory<BraveRewardsTipRedditUserFunction> weak_factory_;
   void OnRedditPublisherInfoSaved(
-      std::unique_ptr<brave_rewards::ContentSite> publisher_info);
+      std::unique_ptr<brave_rewards::PublisherInfo> publisher_info);
 };
 
 class BraveRewardsGetPublisherDataFunction : public ExtensionFunction {
@@ -295,7 +348,7 @@ class BraveRewardsGetRecurringTipsFunction : public ExtensionFunction {
 
  private:
     void OnGetRecurringTips(
-        std::unique_ptr<brave_rewards::ContentSiteList> list);
+        std::unique_ptr<brave_rewards::PublisherInfoList> list);
 };
 
 class BraveRewardsGetPublisherBannerFunction : public ExtensionFunction {

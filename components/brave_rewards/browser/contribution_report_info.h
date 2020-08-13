@@ -9,7 +9,7 @@
 #include <stdint.h>
 #include <vector>
 
-#include "brave/components/brave_rewards/browser/content_site.h"
+#include "brave/components/brave_rewards/browser/publisher_info.h"
 
 namespace brave_rewards {
 
@@ -21,7 +21,7 @@ struct ContributionReportInfo {
   double amount;
   uint32_t type;
   uint32_t processor;
-  std::vector<ContentSite> publishers;
+  std::vector<PublisherInfo> publishers;
   uint64_t created_at;
 };
 

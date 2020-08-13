@@ -83,10 +83,10 @@ class RewardsDOMHandler : public WebUIMessageHandler,
   void GetReconcileStamp(const base::ListValue* args);
   void SaveSetting(const base::ListValue* args);
   void UpdateAdRewards(const base::ListValue* args);
-  void OnContentSiteList(
-      std::unique_ptr<brave_rewards::ContentSiteList>);
+  void OnPublisherInfoList(
+      std::unique_ptr<brave_rewards::PublisherInfoList>);
   void OnExcludedSiteList(
-      std::unique_ptr<brave_rewards::ContentSiteList>);
+      std::unique_ptr<brave_rewards::PublisherInfoList>);
   void ExcludePublisher(const base::ListValue* args);
   void RestorePublishers(const base::ListValue* args);
   void RestorePublisher(const base::ListValue* args);
@@ -137,7 +137,7 @@ class RewardsDOMHandler : public WebUIMessageHandler,
   void OnIsWalletCreated(bool created);
   void GetPendingContributionsTotal(const base::ListValue* args);
   void OnGetPendingContributionsTotal(double amount);
-  void OnContentSiteUpdated(
+  void OnPublisherInfoUpdated(
       brave_rewards::RewardsService* rewards_service) override;
   void GetTransactionHistory(const base::ListValue* args);
   void GetRewardsMainEnabled(const base::ListValue* args);
@@ -151,10 +151,10 @@ class RewardsDOMHandler : public WebUIMessageHandler,
       const uint64_t ad_notifications_received_this_month);
 
   void OnGetRecurringTips(
-    std::unique_ptr<brave_rewards::ContentSiteList> list);
+    std::unique_ptr<brave_rewards::PublisherInfoList> list);
 
   void OnGetOneTimeTips(
-    std::unique_ptr<brave_rewards::ContentSiteList> list);
+    std::unique_ptr<brave_rewards::PublisherInfoList> list);
 
   void SetInlineTippingPlatformEnabled(const base::ListValue* args);
 
@@ -244,7 +244,7 @@ class RewardsDOMHandler : public WebUIMessageHandler,
 
   void OnPublisherListNormalized(
       brave_rewards::RewardsService* rewards_service,
-      const brave_rewards::ContentSiteList& list) override;
+      const brave_rewards::PublisherInfoList& list) override;
 
   void OnTransactionHistoryChanged(
       brave_rewards::RewardsService* rewards_service) override;
@@ -818,18 +818,18 @@ void RewardsDOMHandler::GetReconcileStamp(const base::ListValue* args) {
 
 void RewardsDOMHandler::OnAutoContributePropsReady(
     std::unique_ptr<brave_rewards::AutoContributeProps> props) {
-  rewards_service_->GetContentSiteList(
+  rewards_service_->GetPublisherInfoList(
       0,
       0,
       props->contribution_min_time,
       props->reconcile_stamp,
       props->contribution_non_verified,
       props->contribution_min_visits,
-      base::Bind(&RewardsDOMHandler::OnContentSiteList,
+      base::Bind(&RewardsDOMHandler::OnPublisherInfoList,
                  weak_factory_.GetWeakPtr()));
 }
 
-void RewardsDOMHandler::OnContentSiteUpdated(
+void RewardsDOMHandler::OnPublisherInfoUpdated(
     brave_rewards::RewardsService* rewards_service) {
   rewards_service_->GetAutoContributeProperties(
       base::Bind(&RewardsDOMHandler::OnAutoContributePropsReady,
@@ -973,14 +973,14 @@ void RewardsDOMHandler::RestorePublisher(const base::ListValue *args) {
   rewards_service_->SetPublisherExclude(publisherKey, false);
 }
 
-void RewardsDOMHandler::OnContentSiteList(
-    std::unique_ptr<brave_rewards::ContentSiteList> list) {
+void RewardsDOMHandler::OnPublisherInfoList(
+    std::unique_ptr<brave_rewards::PublisherInfoList> list) {
   if (web_ui()->CanCallJavascript()) {
     auto publishers = std::make_unique<base::ListValue>();
     for (auto const& item : *list) {
       auto publisher = std::make_unique<base::DictionaryValue>();
       publisher->SetString("id", item.id);
-      publisher->SetDouble("percentage", item.percentage);
+      publisher->SetDouble("percentage", item.percent);
       publisher->SetString("publisherKey", item.id);
       publisher->SetInteger("status", item.status);
       publisher->SetInteger("excluded", item.excluded);
@@ -997,7 +997,7 @@ void RewardsDOMHandler::OnContentSiteList(
 }
 
 void RewardsDOMHandler::OnExcludedSiteList(
-    std::unique_ptr<brave_rewards::ContentSiteList> list) {
+    std::unique_ptr<brave_rewards::PublisherInfoList> list) {
   if (web_ui()->CanCallJavascript()) {
     auto publishers = std::make_unique<base::ListValue>();
     for (auto const& item : *list) {
@@ -1078,7 +1078,7 @@ void RewardsDOMHandler::GetRecurringTips(
 }
 
 void RewardsDOMHandler::OnGetRecurringTips(
-    std::unique_ptr<brave_rewards::ContentSiteList> list) {
+    std::unique_ptr<brave_rewards::PublisherInfoList> list) {
   if (web_ui()->CanCallJavascript()) {
     auto publishers = std::make_unique<base::ListValue>();
 
@@ -1086,7 +1086,7 @@ void RewardsDOMHandler::OnGetRecurringTips(
       for (auto const& item : *list) {
         auto publisher = std::make_unique<base::DictionaryValue>();
         publisher->SetString("id", item.id);
-        publisher->SetDouble("percentage", item.percentage);
+        publisher->SetDouble("percentage", item.percent);
         publisher->SetString("publisherKey", item.id);
         publisher->SetInteger("status", item.status);
         publisher->SetInteger("excluded", item.excluded);
@@ -1105,7 +1105,7 @@ void RewardsDOMHandler::OnGetRecurringTips(
 }
 
 void RewardsDOMHandler::OnGetOneTimeTips(
-    std::unique_ptr<brave_rewards::ContentSiteList> list) {
+    std::unique_ptr<brave_rewards::PublisherInfoList> list) {
   if (web_ui()->CanCallJavascript()) {
     auto publishers = std::make_unique<base::ListValue>();
 
@@ -1113,7 +1113,7 @@ void RewardsDOMHandler::OnGetOneTimeTips(
       for (auto const& item : *list) {
         auto publisher = std::make_unique<base::DictionaryValue>();
         publisher->SetString("id", item.id);
-        publisher->SetDouble("percentage", item.percentage);
+        publisher->SetDouble("percentage", item.percent);
         publisher->SetString("publisherKey", item.id);
         publisher->SetInteger("status", item.status);
         publisher->SetInteger("excluded", item.excluded);
@@ -1141,7 +1141,7 @@ void RewardsDOMHandler::GetOneTimeTips(const base::ListValue *args) {
 
 void RewardsDOMHandler::GetContributionList(const base::ListValue *args) {
   if (rewards_service_) {
-    OnContentSiteUpdated(rewards_service_);
+    OnPublisherInfoUpdated(rewards_service_);
   }
 }
 
@@ -1447,8 +1447,8 @@ void RewardsDOMHandler::OnRewardsMainEnabled(
 
 void RewardsDOMHandler::OnPublisherListNormalized(
     brave_rewards::RewardsService* rewards_service,
-    const brave_rewards::ContentSiteList& list) {
-  OnContentSiteList(std::make_unique<brave_rewards::ContentSiteList>(list));
+    const brave_rewards::PublisherInfoList& list) {
+  OnPublisherInfoList(std::make_unique<brave_rewards::PublisherInfoList>(list));
 }
 
 void RewardsDOMHandler::GetTransactionHistory(
@@ -1881,7 +1881,7 @@ void RewardsDOMHandler::OnGetMonthlyReport(
     for (const auto& item : item.publishers) {
       base::Value publisher(base::Value::Type::DICTIONARY);
       publisher.SetStringKey("id", item.id);
-      publisher.SetDoubleKey("percentage", item.percentage);
+      publisher.SetDoubleKey("percentage", item.percent);
       publisher.SetDoubleKey("weight", item.weight);
       publisher.SetStringKey("publisherKey", item.id);
       publisher.SetIntKey("status", item.status);

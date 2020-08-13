@@ -88,7 +88,7 @@ void ExtensionRewardsServiceObserver::OnPanelPublisherInfo(
   publisher.name = info->name;
   publisher.url = info->url;
   publisher.provider = info->provider;
-  publisher.favicon_url = info->favicon_url;
+  publisher.fav_icon_url = info->favicon_url;
   publisher.publisher_key = info->id;
   std::unique_ptr<base::ListValue> args(
       extensions::api::brave_rewards::OnPublisherData::Create(windowId,
@@ -221,7 +221,7 @@ void ExtensionRewardsServiceObserver::OnPendingContributionSaved(
 
 void ExtensionRewardsServiceObserver::OnPublisherListNormalized(
     RewardsService* rewards_service,
-    const brave_rewards::ContentSiteList& list) {
+    const brave_rewards::PublisherInfoList& list) {
   auto* event_router = extensions::EventRouter::Get(profile_);
   if (!event_router) {
     return;
@@ -238,7 +238,7 @@ void ExtensionRewardsServiceObserver::OnPublisherListNormalized(
     auto& publisher = publishers[publishers.size() -1];
 
     publisher.publisher_key = list[i].id;
-    publisher.percentage = list[i].percentage;
+    publisher.percentage = list[i].percent;
     publisher.status = list[i].status;
   }
 

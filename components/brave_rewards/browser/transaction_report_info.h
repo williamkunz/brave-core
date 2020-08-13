@@ -6,7 +6,7 @@
 #ifndef BRAVE_COMPONENTS_BRAVE_REWARDS_BROWSER_TRANSACTION_REPORT_INFO_H_
 #define BRAVE_COMPONENTS_BRAVE_REWARDS_BROWSER_TRANSACTION_REPORT_INFO_H_
 
-#include "brave/components/brave_rewards/browser/content_site.h"
+#include <stdint.h>
 
 namespace brave_rewards {
 

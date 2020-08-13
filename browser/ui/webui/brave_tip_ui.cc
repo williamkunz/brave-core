@@ -61,7 +61,7 @@ class RewardsTipDOMHandler : public WebUIMessageHandler,
   void GetReconcileStamp(const base::ListValue* args);
   void OnReconcileStamp(uint64_t reconcile_stamp);
   void OnGetRecurringTips(
-      std::unique_ptr<brave_rewards::ContentSiteList> list);
+      std::unique_ptr<brave_rewards::PublisherInfoList> list);
   void TweetTip(const base::ListValue *args);
   void OnlyAnonWallet(const base::ListValue* args);
   void GetExternalWallet(const base::ListValue* args);
@@ -236,7 +236,7 @@ void RewardsTipDOMHandler::GetRecurringTips(
 }
 
 void RewardsTipDOMHandler::OnGetRecurringTips(
-    std::unique_ptr<brave_rewards::ContentSiteList> list) {
+    std::unique_ptr<brave_rewards::PublisherInfoList> list) {
   if (!web_ui()->CanCallJavascript()) {
     return;
   }

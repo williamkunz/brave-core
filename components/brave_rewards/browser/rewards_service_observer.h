@@ -12,9 +12,9 @@
 
 #include "base/observer_list_types.h"
 #include "brave/components/brave_rewards/browser/balance_report.h"
-#include "brave/components/brave_rewards/browser/content_site.h"
 #include "brave/components/brave_rewards/browser/promotion.h"
 #include "brave/components/brave_rewards/browser/publisher_banner.h"
+#include "brave/components/brave_rewards/browser/publisher_info.h"
 #include "brave/components/brave_rewards/browser/rewards_parameters.h"
 
 namespace brave_rewards {
@@ -39,7 +39,7 @@ class RewardsServiceObserver : public base::CheckedObserver {
       RewardsService* rewards_service,
       const uint32_t result,
       brave_rewards::Promotion promotion) {}
-  virtual void OnContentSiteUpdated(
+  virtual void OnPublisherInfoUpdated(
       RewardsService* rewards_service) {}
   virtual void OnExcludedSitesChanged(
       RewardsService* rewards_service,
@@ -63,7 +63,7 @@ class RewardsServiceObserver : public base::CheckedObserver {
       int result) {}
   virtual void OnPublisherListNormalized(
       RewardsService* rewards_service,
-      const brave_rewards::ContentSiteList& list) {}
+      const brave_rewards::PublisherInfoList& list) {}
   virtual void OnTransactionHistoryChanged(
       brave_rewards::RewardsService* rewards_service) {}
   virtual void OnRecurringTipSaved(
@@ -87,7 +87,7 @@ class RewardsServiceObserver : public base::CheckedObserver {
   // RewardsServiceObserver should not be used to return responses to the
   // caller. Method calls on RewardsService should use callbacks to return
   // responses. The observer is primarily for broadcast notifications of events
-  // from the the rewards service. OnWalletInitialized, OnContentSiteUpdated,
+  // from the the rewards service. OnWalletInitialized, OnPublisherInfoUpdated,
   // etc... are examples of events that all observers will be interested in.
 };
 

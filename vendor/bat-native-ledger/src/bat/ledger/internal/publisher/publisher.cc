@@ -143,9 +143,7 @@ void Publisher::SaveVisit(
       publisher_key,
       [this, publisher_key, on_server_info](bool publisher_exists) {
         if (publisher_exists) {
-          ledger_->publisher()->GetServerPublisherInfo(
-              publisher_key,
-              on_server_info);
+          GetServerPublisherInfo(publisher_key, on_server_info);
         } else {
           on_server_info(nullptr);
         }
@@ -267,8 +265,7 @@ void Publisher::SaveVisitInternal(
     return;
   }
 
-  bool is_verified = ledger_->publisher()->IsConnectedOrVerified(
-      status);
+  bool is_verified = IsConnectedOrVerified(status);
 
   bool new_visit = false;
   if (!publisher_info) {
@@ -331,7 +328,8 @@ void Publisher::SaveVisitInternal(
         this,
         _1);
 
-    ledger_->database()->SavePublisherInfo(std::move(publisher_info), callback);
+    ledger_->database()->SavePublisherInfo(publisher_info->Clone(), callback);
+    ledger_->database()->SaveActivityInfo(std::move(publisher_info), callback);
   } else if (!excluded &&
              ledger_->state()->GetAutoContributeEnabled() &&
              min_duration_ok &&
@@ -791,6 +789,100 @@ void Publisher::OnServerPublisherInfoLoaded(
   }
 
   callback(std::move(server_info));
+}
+
+void Publisher::UpdateMediaDuration(
+    const std::string& publisher_key,
+    uint64_t duration) {
+  BLOG(1, "Media duration: " << duration);
+  ledger_->database()->GetPublisherInfo(publisher_key,
+      std::bind(&Publisher::OnGetPublisherInfoForUpdateMediaDuration,
+                this,
+                _1,
+                _2,
+                publisher_key,
+                duration));
+}
+
+void Publisher::OnGetPublisherInfoForUpdateMediaDuration(
+    ledger::Result result,
+    ledger::PublisherInfoPtr info,
+    const std::string& publisher_key,
+    uint64_t duration) {
+  if (result != ledger::Result::LEDGER_OK) {
+    BLOG(0, "Failed to retrieve publisher info while updating media duration");
+    return;
+  }
+
+  ledger_->database()->UpdateActivityInfoDuration(
+      publisher_key,
+      duration,
+      [publisher_key](const ledger::Result result) {
+        if (result != ledger::Result::LEDGER_OK) {
+          BLOG(0, "Failed to update media duration for publisher");
+          return;
+        }
+      });
+}
+
+void Publisher::GetPublisherPanelInfo(
+    const std::string& publisher_key,
+    ledger::GetPublisherInfoCallback callback) {
+  auto filter = CreateActivityFilter(
+      publisher_key,
+      ledger::ExcludeFilter::FILTER_ALL,
+      false,
+      ledger_->state()->GetReconcileStamp(),
+      true,
+      false);
+
+  ledger_->database()->GetPanelPublisherInfo(std::move(filter),
+      std::bind(&Publisher::OnGetPanelPublisherInfo,
+                this,
+                _1,
+                _2,
+                callback));
+}
+
+void Publisher::OnGetPanelPublisherInfo(
+    const ledger::Result result,
+    ledger::PublisherInfoPtr info,
+    ledger::GetPublisherInfoCallback callback) {
+  if (result != ledger::Result::LEDGER_OK) {
+    BLOG(0, "Failed to retrieve panel publisher info");
+    callback(result, nullptr);
+    return;
+  }
+
+  callback(result, std::move(info));
+}
+
+void Publisher::SavePublisherInfo(
+    const uint64_t window_id,
+    ledger::PublisherInfoPtr publisher_info,
+    ledger::ResultCallback callback) {
+  if (!publisher_info || publisher_info->id.empty()) {
+    BLOG(0, "Publisher key is missing for url");
+    callback(ledger::Result::LEDGER_ERROR);
+    return;
+  }
+
+  ledger::VisitData visit_data;
+  visit_data.provider = publisher_info->provider;
+  visit_data.name = publisher_info->name;
+  visit_data.url = publisher_info->url;
+  if (!publisher_info->favicon_url.empty()) {
+    visit_data.favicon_url = publisher_info->favicon_url;
+  }
+
+  SaveVideoVisit(
+      publisher_info->id,
+      visit_data,
+      0,
+      window_id,
+      [=](auto result, ledger::PublisherInfoPtr publisher_info) {
+        callback(result);
+      });
 }
 
 }  // namespace braveledger_publisher

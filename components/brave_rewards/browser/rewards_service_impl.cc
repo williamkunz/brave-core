@@ -46,7 +46,6 @@
 #include "brave/components/brave_rewards/browser/android_util.h"
 #include "brave/components/brave_rewards/browser/auto_contribution_props.h"
 #include "brave/components/brave_rewards/browser/balance_report.h"
-#include "brave/components/brave_rewards/browser/content_site.h"
 #include "brave/components/brave_rewards/browser/contribution_info.h"
 #include "brave/components/brave_rewards/browser/event_log.h"
 #include "brave/components/brave_rewards/browser/file_util.h"
@@ -113,20 +112,20 @@ const int kTailDiagnosticLogToNumLines = 20000;
 const int kDiagnosticLogMaxFileSize = 10 * (1024 * 1024);
 const char pref_prefix[] = "brave.rewards";
 
-ContentSite PublisherInfoToContentSite(
+PublisherInfo PublisherInfoToRewardsPublisherInfo(
     const ledger::PublisherInfo& publisher_info) {
-  ContentSite content_site(publisher_info.id);
-  content_site.percentage = publisher_info.percent;
-  content_site.status = static_cast<uint32_t>(publisher_info.status);
-  content_site.excluded = static_cast<int>(publisher_info.excluded);
-  content_site.name = publisher_info.name;
-  content_site.url = publisher_info.url;
-  content_site.provider = publisher_info.provider;
-  content_site.favicon_url = publisher_info.favicon_url;
-  content_site.id = publisher_info.id;
-  content_site.weight = publisher_info.weight;
-  content_site.reconcile_stamp = publisher_info.reconcile_stamp;
-  return content_site;
+  PublisherInfo rewards_publisher_info;
+  rewards_publisher_info.percent = publisher_info.percent;
+  rewards_publisher_info.status = static_cast<uint32_t>(publisher_info.status);
+  rewards_publisher_info.excluded = static_cast<int>(publisher_info.excluded);
+  rewards_publisher_info.name = publisher_info.name;
+  rewards_publisher_info.url = publisher_info.url;
+  rewards_publisher_info.provider = publisher_info.provider;
+  rewards_publisher_info.favicon_url = publisher_info.favicon_url;
+  rewards_publisher_info.id = publisher_info.id;
+  rewards_publisher_info.weight = publisher_info.weight;
+  rewards_publisher_info.reconcile_stamp = publisher_info.reconcile_stamp;
+  return rewards_publisher_info;
 }
 
 std::string URLMethodToRequestType(ledger::UrlMethod method) {
@@ -593,14 +592,14 @@ void RewardsServiceImpl::CreateWalletAttestationResult(
 }
 #endif
 
-void RewardsServiceImpl::GetContentSiteList(
+void RewardsServiceImpl::GetPublisherInfoList(
     uint32_t start,
     uint32_t limit,
     uint64_t min_visit_time,
     uint64_t reconcile_stamp,
     bool allow_non_verified,
     uint32_t min_visits,
-    const GetContentSiteListCallback& callback) {
+    const GetPublisherInfoListCallback& callback) {
   if (!Connected()) {
     return;
   }
@@ -619,33 +618,34 @@ void RewardsServiceImpl::GetContentSiteList(
       start,
       limit,
       std::move(filter),
-      base::BindOnce(&RewardsServiceImpl::OnGetContentSiteList,
+      base::BindOnce(&RewardsServiceImpl::OnGetPublisherInfoList,
                      AsWeakPtr(),
                      callback));
 }
 
 void RewardsServiceImpl::GetExcludedList(
-    const GetContentSiteListCallback& callback) {
+    const GetPublisherInfoListCallback& callback) {
   if (!Connected()) {
     return;
   }
 
   bat_ledger_->GetExcludedList(base::BindOnce(
-      &RewardsServiceImpl::OnGetContentSiteList,
+      &RewardsServiceImpl::OnGetPublisherInfoList,
       AsWeakPtr(),
       callback));
 }
 
-void RewardsServiceImpl::OnGetContentSiteList(
-    const GetContentSiteListCallback& callback,
+void RewardsServiceImpl::OnGetPublisherInfoList(
+    const GetPublisherInfoListCallback& callback,
     ledger::PublisherInfoList list) {
-  std::unique_ptr<ContentSiteList> site_list(new ContentSiteList);
+  std::unique_ptr<PublisherInfoList> publisher_info_list(new PublisherInfoList);
 
-  for (auto &publisher : list) {
-    site_list->push_back(PublisherInfoToContentSite(*publisher));
+  for (auto& publisher : list) {
+    publisher_info_list->push_back(
+        PublisherInfoToRewardsPublisherInfo(*publisher));
   }
 
-  callback.Run(std::move(site_list));
+  callback.Run(std::move(publisher_info_list));
 }
 
 void RewardsServiceImpl::OnLoad(SessionID tab_id, const GURL& url) {
@@ -2047,13 +2047,13 @@ void RewardsServiceImpl::OnMediaInlineInfoSaved(
     return;
   }
 
-  std::unique_ptr<brave_rewards::ContentSite> site;
+  std::unique_ptr<brave_rewards::PublisherInfo> publisher_info;
 
   if (result == ledger::Result::LEDGER_OK) {
-    site = std::make_unique<brave_rewards::ContentSite>(
-        PublisherInfoToContentSite(*publisher));
+    publisher_info = std::make_unique<brave_rewards::PublisherInfo>(
+        PublisherInfoToRewardsPublisherInfo(*publisher));
   }
-  std::move(callback).Run(std::move(site));
+  std::move(callback).Run(std::move(publisher_info));
 }
 
 void RewardsServiceImpl::SaveInlineMediaInfo(
@@ -2072,16 +2072,136 @@ void RewardsServiceImpl::SaveInlineMediaInfo(
                     std::move(callback)));
 }
 
+void RewardsServiceImpl::UpdateMediaDuration(
+    const std::string& publisher_key,
+    uint64_t duration) {
+  if (!Connected()) {
+    return;
+  }
+
+  bat_ledger_->UpdateMediaDuration(publisher_key, duration);
+}
+
+void RewardsServiceImpl::GetPublisherInfo(
+    const std::string& publisher_key,
+    GetPublisherInfoCallback callback) {
+  if (!Connected()) {
+    return;
+  }
+
+  bat_ledger_->GetPublisherInfo(
+      publisher_key,
+      base::BindOnce(&RewardsServiceImpl::OnPublisherInfo,
+          AsWeakPtr(),
+          std::move(callback)));
+}
+
+void RewardsServiceImpl::OnPublisherInfo(
+    GetPublisherInfoCallback callback,
+    const ledger::Result result,
+    ledger::PublisherInfoPtr info) {
+  const auto result_converted = static_cast<int>(result);
+  if (result != ledger::Result::LEDGER_OK) {
+    std::move(callback).Run(result_converted, nullptr);
+    return;
+  }
+
+  brave_rewards::PublisherInfo rewards_publisher_info =
+      PublisherInfoToRewardsPublisherInfo(*info);
+
+  auto rewards_publisher_info_ptr =
+      std::make_unique<brave_rewards::PublisherInfo>(rewards_publisher_info);
+  std::move(callback).Run(
+      result_converted,
+      std::move(rewards_publisher_info_ptr));
+}
+
+void RewardsServiceImpl::GetPublisherPanelInfo(
+    const std::string& publisher_key,
+    GetPublisherInfoCallback callback) {
+  if (!Connected()) {
+    return;
+  }
+
+  bat_ledger_->GetPublisherPanelInfo(
+      publisher_key,
+      base::BindOnce(&RewardsServiceImpl::OnPublisherPanelInfo,
+          AsWeakPtr(),
+          std::move(callback)));
+}
+
+void RewardsServiceImpl::OnPublisherPanelInfo(
+    GetPublisherInfoCallback callback,
+    const ledger::Result result,
+    ledger::PublisherInfoPtr info) {
+  const auto result_converted = static_cast<int>(result);
+  if (result != ledger::Result::LEDGER_OK) {
+    std::move(callback).Run(result_converted, nullptr);
+    return;
+  }
+
+  brave_rewards::PublisherInfo rewards_publisher_info =
+      PublisherInfoToRewardsPublisherInfo(*info);
+
+  auto rewards_publisher_info_ptr =
+      std::make_unique<brave_rewards::PublisherInfo>(rewards_publisher_info);
+  std::move(callback).Run(
+      result_converted,
+      std::move(rewards_publisher_info_ptr));
+}
+
+void RewardsServiceImpl::SavePublisherInfo(
+    const uint64_t window_id,
+    std::unique_ptr<brave_rewards::PublisherInfo> publisher_info,
+    SavePublisherInfoCallback callback) {
+  if (!Connected()) {
+    return;
+  }
+
+  auto ledger_publisher_info = ledger::PublisherInfo::New();
+  ledger_publisher_info->id = publisher_info->id;
+  ledger_publisher_info->duration = publisher_info->duration;
+  ledger_publisher_info->score = publisher_info->score;
+  ledger_publisher_info->visits = publisher_info->visits;
+  ledger_publisher_info->percent = publisher_info->percent;
+  ledger_publisher_info->weight = publisher_info->weight;
+  ledger_publisher_info->excluded =
+      static_cast<ledger::PublisherExclude>(publisher_info->excluded);
+  ledger_publisher_info->reconcile_stamp = publisher_info->reconcile_stamp;
+  ledger_publisher_info->status =
+      static_cast<ledger::PublisherStatus>(publisher_info->status);
+  ledger_publisher_info->status_updated_at = publisher_info->status_updated_at;
+  ledger_publisher_info->name = publisher_info->name;
+  ledger_publisher_info->url = publisher_info->url;
+  ledger_publisher_info->provider = publisher_info->provider;
+  ledger_publisher_info->favicon_url = publisher_info->favicon_url;
+
+  bat_ledger_->SavePublisherInfo(
+      window_id,
+      std::move(ledger_publisher_info),
+      base::BindOnce(&RewardsServiceImpl::OnSavePublisherInfo,
+          AsWeakPtr(),
+          std::move(callback)));
+}
+
+void RewardsServiceImpl::OnSavePublisherInfo(
+    SavePublisherInfoCallback callback,
+    const ledger::Result result) {
+  const auto result_converted = static_cast<int>(result);
+  std::move(callback).Run(result_converted);
+}
+
 void RewardsServiceImpl::OnGetRecurringTips(
     GetRecurringTipsCallback callback,
     ledger::PublisherInfoList list) {
-    std::unique_ptr<brave_rewards::ContentSiteList> new_list(
-      new brave_rewards::ContentSiteList);
+  std::unique_ptr<brave_rewards::PublisherInfoList> new_list(
+      new brave_rewards::PublisherInfoList);
 
   for (auto& publisher : list) {
-    brave_rewards::ContentSite site = PublisherInfoToContentSite(*publisher);
-    site.percentage = publisher->weight;
-    new_list->push_back(site);
+    brave_rewards::PublisherInfo publisher_info =
+        PublisherInfoToRewardsPublisherInfo(*publisher);
+    publisher_info.percent = publisher->weight;
+    new_list->push_back(publisher_info);
   }
 
   std::move(callback).Run(std::move(new_list));
@@ -2102,13 +2222,14 @@ void RewardsServiceImpl::GetRecurringTips(
 void RewardsServiceImpl::OnGetOneTimeTips(
     GetRecurringTipsCallback callback,
     ledger::PublisherInfoList list) {
-    std::unique_ptr<brave_rewards::ContentSiteList> new_list(
-      new brave_rewards::ContentSiteList);
+    std::unique_ptr<brave_rewards::PublisherInfoList> new_list(
+      new brave_rewards::PublisherInfoList);
 
   for (auto& publisher : list) {
-    brave_rewards::ContentSite site = PublisherInfoToContentSite(*publisher);
-    site.percentage = publisher->weight;
-    new_list->push_back(site);
+    brave_rewards::PublisherInfo publisher_info =
+        PublisherInfoToRewardsPublisherInfo(*publisher);
+    publisher_info.percent = publisher->weight;
+    new_list->push_back(publisher_info);
   }
 
   std::move(callback).Run(std::move(new_list));
@@ -2599,19 +2720,19 @@ void RewardsServiceImpl::OnTip(
     const std::string& publisher_key,
     const double amount,
     const bool recurring,
-    std::unique_ptr<brave_rewards::ContentSite> site) {
-  if (!Connected() || !site) {
+    std::unique_ptr<brave_rewards::PublisherInfo> publisher_info) {
+  if (!Connected() || !publisher_info) {
     return;
   }
 
   auto info = ledger::PublisherInfo::New();
   info->id = publisher_key;
-  info->name = site->name;
-  info->url = site->url;
-  info->provider = site->provider;
-  info->favicon_url = site->favicon_url;
+  info->name = publisher_info->name;
+  info->url = publisher_info->url;
+  info->provider = publisher_info->provider;
+  info->favicon_url = publisher_info->favicon_url;
 
-  bat_ledger_->SavePublisherInfo(
+  bat_ledger_->SavePublisherInfoForTip(
       std::move(info),
       base::BindOnce(&RewardsServiceImpl::OnTipPublisherSaved,
           AsWeakPtr(),
@@ -2668,11 +2789,11 @@ void RewardsServiceImpl::PrepareLedgerEnvForTesting() {
 
   // this is needed because we are using braveledger_request_util::buildURL
   // directly in RewardsBrowserTest
-  #if defined(OFFICIAL_BUILD)
+#if defined(OFFICIAL_BUILD)
   ledger::_environment = ledger::Environment::PRODUCTION;
-  #else
+#else
   ledger::_environment = ledger::Environment::STAGING;
-  #endif
+#endif
 }
 
 void RewardsServiceImpl::StartMonthlyContributionForTest() {
@@ -2738,15 +2859,16 @@ void RewardsServiceImpl::GetPendingContributionsTotal(
 
 void RewardsServiceImpl::PublisherListNormalized(
     ledger::PublisherInfoList list) {
-  ContentSiteList site_list;
+  PublisherInfoList publisher_info_list;
   for (const auto& publisher : list) {
     if (publisher->percent >= 1) {
-      site_list.push_back(PublisherInfoToContentSite(*publisher));
+      publisher_info_list.push_back(
+          PublisherInfoToRewardsPublisherInfo(*publisher));
     }
   }
 
   for (auto& observer : observers_) {
-    observer.OnPublisherListNormalized(this, site_list);
+    observer.OnPublisherListNormalized(this, publisher_info_list);
   }
 }
 
@@ -3548,7 +3670,8 @@ void ConvertLedgerToServiceContributionReportList(
     info.created_at = item->created_at;
     info.publishers = {};
     for (auto& publisher : item->publishers) {
-      info.publishers.push_back(PublisherInfoToContentSite(*publisher));
+      info.publishers.push_back(
+          PublisherInfoToRewardsPublisherInfo(*publisher));
     }
 
     converted_list->push_back(info);

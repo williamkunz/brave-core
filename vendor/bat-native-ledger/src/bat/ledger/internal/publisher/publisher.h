@@ -97,7 +97,29 @@ class Publisher {
       const std::string& publisher_key,
       ledger::GetServerPublisherInfoCallback callback);
 
+  void UpdateMediaDuration(const std::string& publisher_key, uint64_t duration);
+
+  void GetPublisherPanelInfo(
+      const std::string& publisher_key,
+      ledger::GetPublisherInfoCallback callback);
+
+  void SavePublisherInfo(
+      const uint64_t window_id,
+      ledger::PublisherInfoPtr publisher_info,
+      ledger::ResultCallback callback);
+
  private:
+  void OnGetPublisherInfoForUpdateMediaDuration(
+      ledger::Result result,
+      ledger::PublisherInfoPtr info,
+      const std::string& publisher_key,
+      uint64_t duration);
+
+  void OnGetPanelPublisherInfo(
+      const ledger::Result result,
+      ledger::PublisherInfoPtr info,
+      ledger::GetPublisherInfoCallback callback);
+
   void onPublisherActivitySave(
       uint64_t windowId,
       const ledger::VisitData& visit_data,

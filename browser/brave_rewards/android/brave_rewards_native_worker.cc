@@ -423,7 +423,7 @@ void BraveRewardsNativeWorker::GetRecurringDonations(JNIEnv* env,
 }
 
 void BraveRewardsNativeWorker::OnGetRecurringTips(
-        std::unique_ptr<brave_rewards::ContentSiteList> list) {
+        std::unique_ptr<brave_rewards::PublisherInfoList> list) {
   map_recurrent_publishers_.clear();
   if (list) {
     for (size_t i = 0; i < list->size(); i++) {
@@ -507,8 +507,8 @@ double BraveRewardsNativeWorker::GetPublisherRecurrentDonationAmount(
   auto it = map_recurrent_publishers_.find(
     base::android::ConvertJavaStringToUTF8(env, publisher));
   if (it != map_recurrent_publishers_.end()) {
-    // for Recurrent Donations, the amount is stored in ContentSite::percentage
-    amount = it->second.percentage;
+    // for Recurrent Donations, the amount is stored in PublisherInfo::percent
+    amount = it->second.percent;
   }
   return  amount;
 }
