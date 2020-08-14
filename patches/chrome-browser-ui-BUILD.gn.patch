@@ -1,12 +1,12 @@
 diff --git a/chrome/browser/ui/BUILD.gn b/chrome/browser/ui/BUILD.gn
-index a429fd9751162141854cdb4b7154806fd7a00cf4..60333eaa0a6f4221533f5ce9dd148b1e89eba1c9 100644
+index a429fd9751162141854cdb4b7154806fd7a00cf4..e42a59f5801da69c6e8b14ed45b0d2d182f050a4 100644
 --- a/chrome/browser/ui/BUILD.gn
 +++ b/chrome/browser/ui/BUILD.gn
 @@ -587,6 +587,7 @@ static_library("ui") {
      "//ui/webui",
      "//v8:v8_version",
    ]
-+  deps+= [ "//brave/browser/ui" ]
++  sources += brave_browser_ui_sources deps += brave_browser_ui_deps
    allow_circular_includes_from +=
        [ "//chrome/browser/ui/webui/bluetooth_internals" ]
  
