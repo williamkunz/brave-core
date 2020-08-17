@@ -94,7 +94,7 @@ public class RetentionNotificationUtil {
         DatabaseHelper mDatabaseHelper = DatabaseHelper.getInstance();
         long totalSavedBandwidth = mDatabaseHelper.getTotalSavedBandwidth();
         long adsTrackersCount = mDatabaseHelper.getAllStats().size();
-        long timeSavedCount = adsTrackersCount * BraveNewTabPageLayout.MILLISECONDS_PER_ITEM;
+        long timeSavedCount = adsTrackersCount * BraveStatsUtil.MILLISECONDS_PER_ITEM;
 
         long adsTrackersCountWeekly = mDatabaseHelper.getAllStatsWithDate(BraveStatsUtil.getCalculatedDate("yyyy-MM-dd", 7), BraveStatsUtil.getCalculatedDate("yyyy-MM-dd", 0)).size();
 
