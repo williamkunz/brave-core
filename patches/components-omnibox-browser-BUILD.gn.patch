@@ -10,3 +10,15 @@ index 9c15bb290b4714e39be95d37ada6e3f3df54af55..402d3b14aec801d567b7fe1727b0b08b
  
    if (is_android) {
      sources += [
+@@ -410,7 +411,10 @@ jumbo_static_library("test_support") {
+ }
+ 
+ bundle_data("unit_tests_bundle_data") {
+-  visibility = [ ":unit_tests" ]
++  visibility = [
++    ":unit_tests",
++    "//brave/test:brave_unit_tests",
++  ]
+   testonly = true
+   sources = [
+     "//components/test/data/omnibox/Shortcuts.no_fill_into_edit.sql",
