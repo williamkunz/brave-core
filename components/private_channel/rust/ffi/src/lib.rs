@@ -13,8 +13,9 @@ macro_rules! assert_not_null {
 #[repr(C)]
 pub struct ResultChallenge {
     pub pkeys_ptr: *const u8,
-    pub skey_ptr: *const u8,
     pub pkeys_byte_size: usize,
+    pub skeys_ptr: *const u8,
+    pub skeys_byte_size: usize,
     pub shared_pubkey_ptr: *const u8,
     pub shared_pkeys_byte_size: usize,
     pub encrypted_hashes_ptr: *const u8,
@@ -29,8 +30,9 @@ impl Default for ResultChallenge {
         ResultChallenge {
             error: true,
             pkeys_ptr: mock_vec.as_ptr(),
-            skey_ptr: mock_vec.as_ptr(),
             pkeys_byte_size: 0,
+            skeys_ptr: mock_vec.as_ptr(),
+            skeys_byte_size: 0,
             shared_pkeys_byte_size: 0,
             shared_pubkey_ptr: mock_vec.as_ptr(),
             encrypted_hashes_size: 0,
@@ -104,8 +106,8 @@ pub unsafe extern "C" fn client_start_challenge(
     let pkeys_buff = pkeys.into_boxed_slice();
     let pkeys_buff = std::mem::ManuallyDrop::new(pkeys_buff);
 
-    let skey_buff = skeys.into_boxed_slice();
-    let skey_buff = std::mem::ManuallyDrop::new(skey_buff);
+    let skeys_buff = skeys.into_boxed_slice();
+    let skeys_buff = std::mem::ManuallyDrop::new(skeys_buff);
 
     let shared_pks_buff = shared_pks.into_boxed_slice();
     let shared_pks_buff = std::mem::ManuallyDrop::new(shared_pks_buff);
@@ -115,8 +117,9 @@ pub unsafe extern "C" fn client_start_challenge(
 
     ResultChallenge {
         pkeys_ptr: pkeys_buff.as_ptr(),
-        skey_ptr: skey_buff.as_ptr(),
         pkeys_byte_size: pkeys_buff.len(),
+        skeys_ptr: skeys_buff.as_ptr(),
+        skeys_byte_size: skeys_buff.len(),
         shared_pubkey_ptr: shared_pks_buff.as_ptr(),
         shared_pkeys_byte_size: shared_pks_buff.len(),
         encrypted_hashes_ptr: enc_hashes_buff.as_ptr(),
@@ -187,16 +190,16 @@ pub unsafe extern "C" fn client_second_round(
 #[no_mangle]
 pub unsafe extern "C" fn deallocate_first_round_result(result: ResultChallenge) {
     assert_not_null!(result.pkeys_ptr);
-    let _key = Box::from_raw(std::slice::from_raw_parts_mut(
+    let _pkeys = Box::from_raw(std::slice::from_raw_parts_mut(
         result.pkeys_ptr as *mut u8,
-        KEY_SIZE,
+        result.pkeys_byte_size,
     ))
     .into_vec();
 
-    assert_not_null!(result.skey_ptr);
-    let _skey = Box::from_raw(std::slice::from_raw_parts_mut(
-        result.skey_ptr as *mut u8,
-        KEY_SIZE,
+    assert_not_null!(result.skeys_ptr);
+    let _skeys = Box::from_raw(std::slice::from_raw_parts_mut(
+        result.skeys_ptr as *mut u8,
+        result.skeys_byte_size,
     ))
     .into_vec();
 

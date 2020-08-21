@@ -35,14 +35,14 @@ class PrivateChannel {
   void FirstRoundProtocol(const char* server_pubkey);
 
   void OnPrivateChannelFirstRoundLoadComplete(
-      std::string client_sk,
+      std::string client_sks,
       std::string id,
       int input_size,
       std::unique_ptr<std::string> response_body);
 
   void SecondRoundProtocol(
     const std::string& encrypted_input,
-    std::string client_sk,
+    std::string client_sks,
     std::string id,
     int input_size);
 

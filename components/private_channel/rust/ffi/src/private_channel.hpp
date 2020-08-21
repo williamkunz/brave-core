@@ -17,8 +17,9 @@ namespace private_channel {
 
   typedef struct {
     const uint8_t *pkeys_ptr;
-    const uint8_t *skey_ptr;
     uintptr_t pkeys_byte_size;
+    const uint8_t *skeys_ptr;
+    uintptr_t skeys_byte_size;
     const uint8_t *shared_pubkey_ptr;
     uintptr_t shared_pkeys_byte_size;
     const uint8_t *encrypted_hashes_ptr;
@@ -41,7 +42,7 @@ namespace private_channel {
     const char* const* input_ptr, int size, const char* server_pk);
 	
  ResultSecondRound second_round(
-   const char* enc_input_ptr, int size,  const char* sk);
+   const char* enc_input_ptr, int size, const char* sk);
 
   void free_first_round_result(ResultChallenge result);
 

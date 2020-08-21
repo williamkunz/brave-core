@@ -134,6 +134,11 @@ namespace brave_private_channel {
 
     auto request_artefacts = ChallengeFirstRound(input, input_size, server_pk);
 
+    // TODO(@gpestana): deal with error
+    if (request_artefacts.error) {
+      LOG(INFO) << "FirstRoundProtocol ERROR:: " << request_artefacts.error;
+    }
+
     const std::string payload = base::StringPrintf(
       "pk_vector=%s&th_key_vector=%s&enc_signals=%s&client_id=%s",
       request_artefacts.client_pks.c_str(),
@@ -183,14 +188,14 @@ namespace brave_private_channel {
       loader_factory, base::BindOnce(
         &PrivateChannel::OnPrivateChannelFirstRoundLoadComplete,
           base::Unretained(this),
-          request_artefacts.client_sk,
+          request_artefacts.client_sks,
           referral_code_,
           request_artefacts.encrypted_hashes_size),
         kMaxPrivateChannelServerResponseSizeBytes);
   }
 
   void PrivateChannel::OnPrivateChannelFirstRoundLoadComplete(
-      std::string client_sk,
+      std::string client_sks,
       std::string id,
       int encrypted_hashes_size,
       std::unique_ptr<std::string> response_body) {
@@ -217,18 +222,18 @@ namespace brave_private_channel {
         }
 
         this->SecondRoundProtocol(
-          safe_response_body.c_str(), client_sk, id, encrypted_hashes_size);
+          safe_response_body.c_str(), client_sks, id, encrypted_hashes_size);
   }
 
   void PrivateChannel::SecondRoundProtocol(
     const std::string& encrypted_input,
-    std::string client_sk,
+    std::string client_sks,
     std::string id,
     int encrypted_hashes_size) {
     LOG(INFO) << "PrivateChannel::SecondRoundProtocol";
 
     auto request_artefacts = SecondRound(
-      encrypted_input.c_str(), encrypted_hashes_size, &client_sk[0]);
+      encrypted_input.c_str(), encrypted_hashes_size, &client_sks[0]);
 
     const std::string payload = base::StringPrintf(
       "rand_vec=%s&partial_dec=%s&proofs=%s&client_id=%s",
@@ -236,6 +241,11 @@ namespace brave_private_channel {
       request_artefacts.partial_decryption.c_str(),
       request_artefacts.proofs.c_str(),
       id.c_str());
+
+    // TODO(@gpestana): deal with error
+    if (request_artefacts.error) {
+      LOG(INFO) << "SecondRoundProtocol ERROR:: " << request_artefacts.error;
+    }
 
     auto resource_request = std::make_unique<network::ResourceRequest>();
     resource_request->method = "POST";

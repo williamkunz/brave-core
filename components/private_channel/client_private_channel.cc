@@ -29,7 +29,8 @@
 
   artefacts.client_pks = convert_to_str(
     results.pkeys_ptr, results.pkeys_byte_size);
-  artefacts.client_sk = convert_to_str(results.skey_ptr, results.key_size);
+  artefacts.client_sks =
+    convert_to_str(results.skeys_ptr, results.skeys_byte_size);
   artefacts.shared_pubkey = convert_to_str(
     results.shared_pubkey_ptr, results.shared_pkeys_byte_size);
   artefacts.encrypted_hashes = convert_to_str(
@@ -43,11 +44,11 @@
   }
 
   SecondRoundArtefacts SecondRound(
-    const char* enc_input, int enc_input_size, const char* client_sk) {
+    const char* enc_input, int enc_input_size, const char* client_sks) {
 
   struct SecondRoundArtefacts artefacts;
   auto results =
-    private_channel::second_round(enc_input, enc_input_size, client_sk);
+    private_channel::second_round(enc_input, enc_input_size, client_sks);
 
   artefacts.partial_decryption = convert_to_str(
     results.encoded_partial_dec_ptr, results.encoded_partial_dec_size);

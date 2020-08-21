@@ -40,6 +40,7 @@ pub fn start_challenge(
 
     // generate new key pair at every round
     let (sks_client, pks_client) = generate_key_vector(length);
+
     let shared_pks = combine_pks_vector(&pks_client, pk_server);
 
     let encrypted_hashes = encrypt_input(&shared_pks, &vector_hashes).map_err(|_| ())?;
@@ -66,11 +67,14 @@ pub fn second_round(input: &[u8], encoded_sks: String) -> Result<SecondRoundOutp
     let enc_checks: Vec<Ciphertext> = bincode::deserialize(input).map_err(|_| ())?;
 
     let (rand_vec, _) = randomize_and_prove(&enc_checks);
+
     let (partial_decryption, proofs_correct_decryption) =
         partial_decryption_and_proof_vec_key(&rand_vec, &sks).map_err(|_| ())?;
 
     let encoded_partial_decryption = bincode::serialize(&partial_decryption).map_err(|_| ())?;
+
     let encoded_proofs = bincode::serialize(&proofs_correct_decryption).map_err(|_| ())?;
+
     let encoded_rand_vec = bincode::serialize(&rand_vec).map_err(|_| ())?;
 
     Ok(SecondRoundOutput {
@@ -95,14 +99,14 @@ pub fn parse_pk(s: String) -> Result<PublicKey, ()> {
 }
 
 pub fn parse_sk_vector(s: String) -> Result<Vec<SecretKey>, ()> {
-    let enc_sks = s[1..s.len() - 1]
+    let sk_vec = s[1..s.len() - 1]
         .split(", ")
         .map(|x| u8::from_str(x))
         .filter_map(Result::ok)
         .collect::<Vec<u8>>();
 
-    let result = match bincode::deserialize(&enc_sks) {
-        Ok(sk) => Ok(sk),
+    let result = match bincode::deserialize(&sk_vec) {
+        Ok(pk) => Ok(pk),
         Err(_) => Err(()),
     };
     result

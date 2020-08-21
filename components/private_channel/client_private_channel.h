@@ -10,7 +10,7 @@
 #include "brave/components/private_channel/rust/ffi/src/private_channel.hpp"
 
   struct ChallengeArtefacts {
-    std::string client_sk;
+    std::string client_sks;
     std::string client_pks;
     std::string shared_pubkey;
     std::string encrypted_hashes;
@@ -37,6 +37,6 @@ ChallengeArtefacts ChallengeFirstRound(
   const char** input, int input_size, const char* server_pk_encoded);
 
 SecondRoundArtefacts SecondRound(
-  const char* enc_input, int size, const char* client_sk);
+  const char* enc_input, int size, const char* client_sks);
 
 #endif  // BRAVE_COMPONENTS_PRIVATE_CHANNEL_CLIENT_PRIVATE_CHANNEL_H_
