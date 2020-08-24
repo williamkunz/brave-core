@@ -21,6 +21,8 @@ cr.define('settings', function() {
     isTorManaged() {}
     getRestartNeeded() {}
     getWeb3ProviderList() {}
+    getIPFSResolveMethodList() {}
+    getIPFSEnabled() {}
   }
 
   /**
@@ -58,6 +60,26 @@ cr.define('settings', function() {
     /** @override */
     getWeb3ProviderList() {
       return new Promise(resolve => chrome.braveWallet.getWeb3ProviderList(resolve))
+    }
+    /** @override */
+    getIPFSResolveMethodList() {
+      return new Promise(resolve => {
+        if (!chrome.ipfs) {
+          resolve(false)
+          return
+        }
+        chrome.ipfs.getIPFSResolveMethodList(resolve)
+      })
+    }
+    /** @override */
+    getIPFSEnabled() {
+      return new Promise(resolve => {
+        if (!chrome.ipfs) {
+          resolve(false)
+          return
+        }
+        chrome.ipfs.getIPFSEnabled(resolve)
+      })
     }
   }
 
