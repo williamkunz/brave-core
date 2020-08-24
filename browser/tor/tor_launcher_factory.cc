@@ -28,6 +28,7 @@ TorLauncherFactory* TorLauncherFactory::GetInstance() {
 
 TorLauncherFactory::TorLauncherFactory()
     : is_starting_(false),
+      is_connected_(false),
       tor_pid_(-1),
       control_(tor::TorControl::Create(this)),
       weak_ptr_factory_(this) {
@@ -111,6 +112,7 @@ void TorLauncherFactory::KillTorProcess() {
   control_->Stop();
   tor_launcher_.reset();
   tor_pid_ = -1;
+  is_connected_ = false;
 }
 
 void TorLauncherFactory::AddObserver(tor::TorProfileServiceImpl* service) {
@@ -131,6 +133,7 @@ void TorLauncherFactory::OnTorLauncherCrashed() {
 void TorLauncherFactory::OnTorCrashed(int64_t pid) {
   LOG(ERROR) << "Tor Process(" << pid << ") Crashed";
   is_starting_ = false;
+  is_connected_ = false;
   for (auto& observer : observers_)
     observer.NotifyTorCrashed(pid);
 }
@@ -138,6 +141,8 @@ void TorLauncherFactory::OnTorCrashed(int64_t pid) {
 void TorLauncherFactory::OnTorLaunched(bool result, int64_t pid) {
   if (result) {
     is_starting_ = false;
+    // We have to wait for circuit established
+    is_connected_ = false;
     tor_pid_ = pid;
   } else {
     LOG(ERROR) << "Tor Launching Failed(" << pid <<")";
@@ -241,6 +246,7 @@ void TorLauncherFactory::OnTorEvent(
     } else if (initial.find("CIRCUIT_ESTABLISHED") != std::string::npos) {
       for (auto& observer : observers_)
         observer.NotifyTorCircuitEstablished(true);
+      is_connected_ = true;
     } else if (initial.find("CIRCUIT_NOT_ESTABLISHED") != std::string::npos) {
       for (auto& observer : observers_)
         observer.NotifyTorCircuitEstablished(false);
