@@ -96,7 +96,7 @@ void TorLauncherFactory::LaunchTorProcess(const tor::TorConfig& config) {
   }
 
   // Launch tor after cleanup is done
-  control_->Start(config_.tor_watch_path(),
+  control_->PreStartCheck(config_.tor_watch_path(),
                   base::BindOnce(&TorLauncherFactory::OnTorControlCheckComplete,
                                  weak_ptr_factory_.GetWeakPtr()));
 }
@@ -149,6 +149,7 @@ void TorLauncherFactory::OnTorLaunched(bool result, int64_t pid) {
   }
   for (auto& observer : observers_)
     observer.NotifyTorLaunched(result, pid);
+  control_->Start();
 }
 
 void TorLauncherFactory::OnTorControlReady() {
