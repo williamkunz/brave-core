@@ -96,9 +96,10 @@ void TorLauncherFactory::LaunchTorProcess(const tor::TorConfig& config) {
   }
 
   // Launch tor after cleanup is done
-  control_->PreStartCheck(config_.tor_watch_path(),
-                  base::BindOnce(&TorLauncherFactory::OnTorControlCheckComplete,
-                                 weak_ptr_factory_.GetWeakPtr()));
+  control_->PreStartCheck(
+      config_.tor_watch_path(),
+      base::BindOnce(&TorLauncherFactory::OnTorControlCheckComplete,
+                     weak_ptr_factory_.GetWeakPtr()));
 }
 
 void TorLauncherFactory::OnTorControlCheckComplete() {
@@ -109,6 +110,7 @@ void TorLauncherFactory::OnTorControlCheckComplete() {
 }
 
 void TorLauncherFactory::KillTorProcess() {
+  DCHECK_CURRENTLY_ON(BrowserThread::UI);
   control_->Stop();
   tor_launcher_.reset();
   tor_pid_ = -1;
@@ -131,11 +133,19 @@ void TorLauncherFactory::OnTorLauncherCrashed() {
 }
 
 void TorLauncherFactory::OnTorCrashed(int64_t pid) {
+  DCHECK_CURRENTLY_ON(BrowserThread::UI);
   LOG(ERROR) << "Tor Process(" << pid << ") Crashed";
   is_starting_ = false;
   is_connected_ = false;
   for (auto& observer : observers_)
     observer.NotifyTorCrashed(pid);
+  KillTorProcess();
+  // Post delayed relaucn for control to stop
+  content::GetUIThreadTaskRunner({})
+    ->PostDelayedTask(FROM_HERE,
+               base::BindOnce(&TorLauncherFactory::RelaunchTor,
+                              weak_ptr_factory_.GetWeakPtr()),
+               base::TimeDelta::FromSeconds(1));
 }
 
 void TorLauncherFactory::OnTorLaunched(bool result, int64_t pid) {
@@ -224,6 +234,14 @@ void TorLauncherFactory::KillOldTorProcess(base::ProcessId id) {
   base::Process tor_process = base::Process::Open(id);
   if (tor_process.IsValid())
     tor_process.Terminate(0, false);
+}
+
+void TorLauncherFactory::RelaunchTor() {
+  Init();
+  control_->PreStartCheck(
+      config_.tor_watch_path(),
+      base::BindOnce(&TorLauncherFactory::OnTorControlCheckComplete,
+                     weak_ptr_factory_.GetWeakPtr()));
 }
 
 void TorLauncherFactory::OnTorEvent(

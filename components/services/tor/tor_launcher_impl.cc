@@ -195,6 +195,7 @@ void TorLauncherImpl::MonitorChild() {
               FROM_HERE, base::BindOnce(std::move(crash_handler_callback_),
                                         pid));
           }
+          break;
         }
       } else {
         // pipes closed
