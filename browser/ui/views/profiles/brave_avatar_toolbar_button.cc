@@ -34,10 +34,10 @@ ui::ImageModel BraveAvatarToolbarButton::GetAvatarIcon(
       browser_->profile()->IsGuestSession()) {
     const int icon_size = ui::TouchUiController::Get()->touch_ui() ? 24 : 20;
     const SkColor icon_color = GetForegroundColor(state);
-    return ui::ImageModel::FromVectorIcon(brave::IsTorProfile(browser_->profile())
-                                              ? kTorProfileIcon
-                                              : kUserMenuGuestIcon,
-                                          icon_size, icon_color);
+    return ui::ImageModel::FromVectorIcon(
+        brave::IsTorProfile(browser_->profile()) ? kTorProfileIcon
+                                                 : kUserMenuGuestIcon,
+        icon_color, icon_size);
   }
   return AvatarToolbarButton::GetAvatarIcon(state, gaia_account_image);
 }
