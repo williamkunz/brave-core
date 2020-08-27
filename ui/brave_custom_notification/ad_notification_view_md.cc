@@ -22,7 +22,6 @@
 #include "brave/ui/brave_custom_notification/notification_control_buttons_view.h"
 #include "brave/ui/brave_custom_notification/notification_header_view.h"
 #include "brave/ui/brave_custom_notification/padded_button.h"
-#include "brave/ui/brave_custom_notification/proportional_image_view.h"
 #include "brave/ui/brave_custom_notification/public/cpp/constants.h"
 #include "brave/ui/brave_custom_notification/public/cpp/notification.h"
 #include "build/build_config.h"
@@ -71,14 +70,9 @@ namespace {
 // Dimensions.
 constexpr gfx::Insets kContentRowPadding(0, 12, 16, 12);
 constexpr gfx::Size kIconViewSize(36, 36);
-constexpr gfx::Insets kLargeImageContainerPadding(0, 16, 16, 16);
-constexpr gfx::Size kLargeImageMinSize(328, 0);
-constexpr gfx::Size kLargeImageMaxSize(328, 218);
 constexpr gfx::Insets kLeftContentPadding(2, 4, 0, 4);
 constexpr gfx::Insets kLeftContentPaddingWithIcon(2, 4, 0, 12);
 
-// Background color of the large image.
-constexpr SkColor kLargeImageBackgroundColor = SkColorSetRGB(0xf5, 0xf5, 0xf5);
 // Background color of the inline settings.
 constexpr SkColor kInlineSettingsBackgroundColor =
     SkColorSetRGB(0xEE, 0xEE, 0xEE);
@@ -147,65 +141,6 @@ class ClickActivator : public ui::EventHandler {
 
 }  // anonymous namespace
 
-// LargeImageView //////////////////////////////////////////////////////////////
-
-LargeImageView::LargeImageView() {
-  SetBackground(views::CreateSolidBackground(kLargeImageBackgroundColor));
-}
-
-LargeImageView::~LargeImageView() = default;
-
-void LargeImageView::SetImage(const gfx::ImageSkia& image) {
-  image_ = image;
-  gfx::Size preferred_size = GetResizedImageSize();
-  preferred_size.SetToMax(kLargeImageMinSize);
-  preferred_size.SetToMin(kLargeImageMaxSize);
-  SetPreferredSize(preferred_size);
-  SchedulePaint();
-  Layout();
-}
-
-void LargeImageView::OnPaint(gfx::Canvas* canvas) {
-  views::View::OnPaint(canvas);
-
-  gfx::Size resized_size = GetResizedImageSize();
-  gfx::Size drawn_size = resized_size;
-  drawn_size.SetToMin(kLargeImageMaxSize);
-  gfx::Rect drawn_bounds = GetContentsBounds();
-  drawn_bounds.ClampToCenteredSize(drawn_size);
-
-  gfx::ImageSkia resized_image = gfx::ImageSkiaOperations::CreateResizedImage(
-      image_, skia::ImageOperations::RESIZE_BEST, resized_size);
-
-  // Cut off the overflown part.
-  gfx::ImageSkia drawn_image = gfx::ImageSkiaOperations::ExtractSubset(
-      resized_image, gfx::Rect(drawn_size));
-
-  canvas->DrawImageInt(drawn_image, drawn_bounds.x(), drawn_bounds.y());
-}
-
-const char* LargeImageView::GetClassName() const {
-  return "LargeImageView";
-}
-
-// Returns expected size of the image right after resizing.
-// The GetResizedImageSize().width() <= kLargeImageMaxSize.width() holds, but
-// GetResizedImageSize().height() may be larger than kLargeImageMaxSize.height()
-// In this case, the overflown part will be just cutted off from the view.
-gfx::Size LargeImageView::GetResizedImageSize() {
-  return kLargeImageMaxSize;
-  gfx::Size original_size = image_.size();
-  if (original_size.width() <= kLargeImageMaxSize.width())
-    return image_.size();
-
-  const double proportion =
-      original_size.height() / static_cast<double>(original_size.width());
-  gfx::Size resized_size;
-  resized_size.SetSize(kLargeImageMaxSize.width(),
-                       kLargeImageMaxSize.width() * proportion);
-  return resized_size;
-}
-
 // NotificationInkDropImpl /////////////////////////////////////////////////////
 
 class NotificationInkDropImpl : public views::InkDropImpl {
@@ -267,7 +202,6 @@ void AdNotificationViewMD::CreateOrUpdateViews(const Notification& notification)
   CreateOrUpdateTitleView(notification);
   CreateOrUpdateNotificationView(notification);
   CreateOrUpdateSmallIconView(notification);
-  CreateOrUpdateImageView(notification);
   UpdateViewForExpandedState(expanded_);
 }
 
@@ -494,7 +428,6 @@ void AdNotificationViewMD::CreateOrUpdateContextTitleView(
   header_row_->SetAccentColor(SK_ColorTRANSPARENT);
   header_row_->SetBackgroundColor(kNotificationBackgroundColor);
   header_row_->SetAppNameElideBehavior(gfx::ELIDE_TAIL);
-  header_row_->SetSummaryText(base::string16());
 
   base::string16 app_name;
   if (notification.UseOriginAsContextMessage()) {
@@ -582,41 +515,6 @@ void AdNotificationViewMD::CreateOrUpdateSmallIconView(
   }
 }
 
-void AdNotificationViewMD::CreateOrUpdateImageView(
-    const Notification& notification) {
-  if (notification.image().IsEmpty()) {
-    if (image_container_view_) {
-      DCHECK(Contains(image_container_view_));
-      delete image_container_view_;
-      image_container_view_ = nullptr;
-    }
-    return;
-  }
-
-  if (!image_container_view_) {
-    image_container_view_ = new views::View();
-
-    gfx::Size preferred_size = kLargeImageMaxSize;
-    SetPreferredSize(preferred_size);
-
-
-    image_container_view_->SetLayoutManager(
-        std::make_unique<views::FillLayout>());
-    image_container_view_->SetBorder(
-        views::CreateEmptyBorder(kLargeImageContainerPadding));
-    image_container_view_->SetBackground(
-        views::CreateSolidBackground(kImageBackgroundColor));
-    image_container_view_->AddChildView(new LargeImageView());
-
-    // Insert the created image container just after the |content_row_|.
-    image_container_view_->SetSize(kLargeImageMaxSize);
-    AddChildViewAt(image_container_view_, GetIndexOf(content_row_) + 1);
-  }
-
-  static_cast<LargeImageView*>(image_container_view_->children().front())
-      ->SetImage(notification.image().AsImageSkia());
-}
-
 bool AdNotificationViewMD::IsExpandable() {
   return false;
 }
@@ -625,10 +523,6 @@ void AdNotificationViewMD::UpdateViewForExpandedState(bool expanded) {
   if (message_view_) {
     message_view_->SetMaxLines(expanded ? kMaxLinesForExpandedNotificationView
                                         : kMaxLinesForNotificationView);
-  }
-  if (image_container_view_) {
-    image_container_view_->SetSize(kLargeImageMaxSize);
-    image_container_view_->SetVisible(expanded);
   }
 
   for (size_t i = kMaxLinesForNotificationView; i < item_views_.size(); ++i) {
@@ -640,8 +534,6 @@ void AdNotificationViewMD::UpdateViewForExpandedState(bool expanded) {
   int max_items = expanded ? item_views_.size() : kMaxLinesForNotificationView;
   if (list_items_count_ > max_items)
     header_row_->SetOverflowIndicator(list_items_count_ - max_items);
-  else if (!item_views_.empty())
-    header_row_->SetSummaryText(base::string16());
 
   right_content_->SetVisible(true);
   left_content_->SetBorder(views::CreateEmptyBorder(kLeftContentPadding));

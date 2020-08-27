@@ -27,10 +27,6 @@ class NotificationHeaderView : public views::Button {
   void SetAppIcon(const gfx::ImageSkia& img);
   void SetAppName(const base::string16& name);
   void SetAppNameElideBehavior(gfx::ElideBehavior elide_behavior);
-
-  // Summary and overflow indicator are all the same UI element so are
-  // mutually exclusive.
-  void SetSummaryText(const base::string16& text);
   void SetOverflowIndicator(int count);
 
   // Set the unified theme color used among the app icon, app name, and expand

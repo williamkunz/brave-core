@@ -234,11 +234,6 @@ void NotificationHeaderView::SetAppNameElideBehavior(
   app_name_view_->SetElideBehavior(elide_behavior);
 }
 
-void NotificationHeaderView::SetSummaryText(const base::string16& text) {
-  summary_text_view_->SetText(text);
-  UpdateSummaryTextVisibility();
-}
-
 void NotificationHeaderView::SetOverflowIndicator(int count) {
   summary_text_view_->SetText(l10n_util::GetStringFUTF16Int(
       IDS_MESSAGE_CENTER_LIST_NOTIFICATION_HEADER_OVERFLOW_INDICATOR, count));

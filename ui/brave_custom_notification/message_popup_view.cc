@@ -27,6 +27,12 @@
 namespace brave_custom_notification {
 namespace {
 static std::map<std::string, MessagePopupView*> g_notifications_;
+static const int kPopupX = 30;
+static const int kPopupY = 30;
+static const int kPopupBaseWidth = 300;
+static const int kPopupBaseHeight = 100;
+static const int kBodyPixelLineHeight = 10;
+static const int kBodyCharactersPerLine = 40;
 }
 
 // static
@@ -57,7 +63,7 @@ MessagePopupView::MessagePopupView(const Notification& notification) :
   views::Widget::InitParams params(views::Widget::InitParams::TYPE_POPUP);
   params.type = views::Widget::InitParams::TYPE_WINDOW_FRAMELESS;
   params.z_order = ui::ZOrderLevel::kFloatingWindow;
-  params.bounds = { 30, 30, 300, 100 + GetBodyHeight(notification.message())};
+  params.bounds = { kPopupX, kPopupY, kPopupBaseWidth, kPopupBaseHeight + GetBodyHeight(notification.message())};
 #if defined(OS_LINUX) && !defined(OS_CHROMEOS)
   // Make the widget explicitly activatable as TYPE_POPUP is not activatable by
   // default but we need focus for the inline reply textarea.
@@ -85,7 +91,6 @@ MessagePopupView::MessagePopupView(const Notification& notification) :
   NotificationView* message_view_ = NotificationViewFactory::Create(notification);
   popup_window_->SetContentsView(message_view_);
   set_notify_enter_exit_on_child(true);
-  // g_message_popup_view = this;
 }
 
 MessagePopupView::~MessagePopupView() {}
@@ -143,7 +148,7 @@ bool MessagePopupView::IsWidgetValid() const {
 }
 
 int MessagePopupView::GetBodyHeight(const base::string16& message) {
-  return (10 * (message.size() / 40)) + 10;
+  return (kBodyPixelLineHeight * (message.size() / kBodyCharactersPerLine));
 }
 
 }  // namespace brave_custom_notification

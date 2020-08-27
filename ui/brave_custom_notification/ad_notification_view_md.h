@@ -31,25 +31,6 @@ class Textfield;
 namespace brave_custom_notification {
 
 class NotificationHeaderView;
-class ProportionalImageView;
-
-class LargeImageView : public views::View {
- public:
-  LargeImageView();
-  ~LargeImageView() override;
-
-  void SetImage(const gfx::ImageSkia& image);
-
-  void OnPaint(gfx::Canvas* canvas) override;
-  const char* GetClassName() const override;
-
- private:
-  gfx::Size GetResizedImageSize();
-
-  gfx::ImageSkia image_;
-
-  DISALLOW_COPY_AND_ASSIGN(LargeImageView);
-};
 
 // View that displays all current types of notification (web, basic, image, and
 // list) except the custom notification. Future notification types may be

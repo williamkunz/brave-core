@@ -58,8 +58,6 @@ source_set("brave_custom_notification") {
     "notification_view_factory.h",
     "padded_button.cc",
     "padded_button.h",
-    "proportional_image_view.cc",
-    "proportional_image_view.h",
   ]
   deps += [
     "//ui/compositor",

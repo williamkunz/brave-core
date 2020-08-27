@@ -39,6 +39,9 @@ namespace brave_custom_notification {
 
 namespace {
 
+static const int kWindowsShadowElevation = 2;
+static const int kWindowsShadowRadius = 0;
+
 bool ShouldShowAeroShadowBorder() {
 #if defined(OS_WIN)
   return ui::win::IsAeroGlassEnabled();
@@ -77,7 +80,7 @@ NotificationView::NotificationView(const Notification& notification) : notificat
 
   // If Aero is enabled, set shadow border.
   if (ShouldShowAeroShadowBorder()) {
-    const auto& shadow = gfx::ShadowDetails::Get(2, 0);
+    const auto& shadow = gfx::ShadowDetails::Get(kWindowsShadowElevation, kWindowsShadowRadius);
     gfx::Insets ninebox_insets = gfx::ShadowValue::GetBlurRegion(shadow.values);
     SetBorder(views::CreateBorderPainter(
         views::Painter::CreateImagePainter(shadow.ninebox_image,
